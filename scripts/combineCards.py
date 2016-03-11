@@ -52,9 +52,8 @@ for ich,fname in enumerate(args):
         label += "_";
     for b in DC.bins:
         bout = label if singlebin else label+b
-	b_in  = label if singlebin else b
-        if isVetoed(b_in,options.channelVetos): continue
-	if not isIncluded(b_in,options.channelIncludes): continue
+        if isVetoed(bout,options.channelVetos): continue
+	if not isIncluded(bout,options.channelIncludes): continue
         obskeyline.append(bout)
         for (p,e) in DC.exp[b].items(): # so that we get only self.DC.processes contributing to this bin
             if DC.isSignal[p] == False: continue
@@ -77,9 +76,8 @@ for ich,fname in enumerate(args):
             continue
         for b in DC.bins:
             bout = label if singlebin else label+b
-	    b_in  = label if singlebin else b
-            if isVetoed(b_in,options.channelVetos): continue
-	    if not isIncluded(b_in,options.channelIncludes): continue
+            if isVetoed(bout,options.channelVetos): continue
+	    if not isIncluded(bout,options.channelIncludes): continue
             if not systeffect.has_key(bout): systeffect[bout] = {} 
             for p in DC.exp[b].keys(): # so that we get only self.DC.processes contributing to this bin
                 r = str(errline[b][p]);
@@ -127,9 +125,8 @@ for ich,fname in enumerate(args):
     if len(DC.shapeMap):
         for b in DC.bins:
             bout = label if singlebin else label+b
-	    b_in  = label if singlebin else b
-            if isVetoed(b_in,options.channelVetos): continue
-	    if not isIncluded(b_in,options.channelIncludes): continue
+            if isVetoed(bout,options.channelVetos): continue
+	    if not isIncluded(bout,options.channelIncludes): continue
             p2sMap  = DC.shapeMap[b]   if DC.shapeMap.has_key(b)   else {}
             p2sMapD = DC.shapeMap['*'] if DC.shapeMap.has_key('*') else {}
             for p, x in p2sMap.items():
@@ -151,9 +148,8 @@ for ich,fname in enumerate(args):
     elif obsline != None:
         for b in DC.bins:
             bout = label if singlebin else label+b
-	    b_in  = label if singlebin else b
-            if isVetoed(b_in,options.channelVetos): continue
-	    if not isIncluded(b_in,options.channelIncludes): continue
+            if isVetoed(bout,options.channelVetos): continue
+	    if not isIncluded(bout,options.channelIncludes): continue
             obsline += [str(DC.obs[b])];
     #get the groups - keep nuisances in a set so that they are never repetitions
     for groupName,nuisanceNames in DC.groups.iteritems():
