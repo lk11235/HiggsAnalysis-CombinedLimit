@@ -17,6 +17,11 @@
 #include "../interface/ProcessNormalization.h"
 #include "../interface/RooSpline1D.h"
 #include "../interface/RooSplineND.h"
+#include "../interface/SplinePdf.h"
+#include "../interface/Width_conv.h"
+#include "../interface/Width_conv_integral.h"
+#include "../interface/Width_conv_offshell.h"
+#include "../interface/Width_integral.h"
 #include "../interface/RooScaleLOSM.h"
 #include "../interface/rVrFLikelihood.h"
 #include "../interface/RooMultiPdf.h"
@@ -27,9 +32,8 @@
 #include "../interface/HZZ4L_RooSpinZeroPdf.h"
 #include "../interface/HZZ4L_RooSpinZeroPdf_phase.h"
 #include "../interface/HZZ4L_RooSpinZeroPdf_2D.h"
+#include "../interface/HZZ4L_RooSpinZeroPdf_1D.h"
 #include "../interface/HZZ4L_RooHighmass.h"
-#include "../interface/RooHighmass_conv.h"
-#include "../interface/RooHighmass_conv_proj.h"
 #include "../interface/HWWLVJJRooPdfs.h"
 #include "../interface/RooMorphingPdf.h"
 
@@ -56,9 +60,12 @@
 #pragma link C++ class HZZ4L_RooSpinZeroPdf+;
 #pragma link C++ class HZZ4L_RooSpinZeroPdf_phase+;
 #pragma link C++ class HZZ4L_RooSpinZeroPdf_2D+;
+#pragma link C++ class HZZ4L_RooSpinZeroPdf_1D+;
 #pragma link C++ class HZZ4L_RooHighmass+;
-#pragma link C++ class RooHighmass_conv+;
-#pragma link C++ class RooHighmass_conv_proj+;
+#pragma link C++ class Width_conv+;
+#pragma link C++ class Width_conv_integral+;
+#pragma link C++ class Width_conv_offshell+;
+#pragma link C++ class Width_integral+;
 #pragma link C++ class AsymPow+;
 #pragma link C++ class CombDataSetFactory+;
 #pragma link C++ class TH1Keys+;
@@ -97,6 +104,7 @@
 #pragma link C++ class cmsmath::SequentialMinimizer+;
 #pragma link C++ class ProcessNormalization+;
 #pragma link C++ class RooSpline1D+;
+#pragma link C++ class SplinePdf+;
 #pragma link C++ class RooSplineND+;
 #pragma link C++ class RooScaleLOSM+;
 #pragma link C++ class RooScaleHGamGamLOSM+;

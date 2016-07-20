@@ -30,6 +30,7 @@ std::vector<RooRealVar *> MultiDimFit::poiVars_;
 std::vector<float>        MultiDimFit::poiVals_;
 RooArgList                MultiDimFit::poiList_;
 float                     MultiDimFit::deltaNLL_ = 0;
+float                     MultiDimFit::NLL_ = 0;
 unsigned int MultiDimFit::points_ = 50;
 unsigned int MultiDimFit::firstPoint_ = 0;
 unsigned int MultiDimFit::lastPoint_  = std::numeric_limits<unsigned int>::max();
@@ -297,6 +298,7 @@ void MultiDimFit::initOnce(RooWorkspace *w, RooStats::ModelConfig *mc_s) {
 	Combine::addBranch(specifiedCatNames_[i].c_str(), &specifiedCatVals_[i], (specifiedCatNames_[i]+"/I").c_str()); 
     }
     Combine::addBranch("deltaNLL", &deltaNLL_, "deltaNLL/F");
+    Combine::addBranch("NLL0", &NLL_, "NLL0/F");
 }
 
 void MultiDimFit::doSingles(RooFitResult &res)
@@ -393,6 +395,7 @@ void MultiDimFit::doGrid(RooAbsReal &nll)
                         minim.minimize(verbose-1);
             if (ok) {
                 deltaNLL_ = nll.getVal() - nll0;
+								NLL_= nll0;
                 double qN = 2*(deltaNLL_);
                 double prob = ROOT::Math::chisquared_cdf_c(qN, n+nOtherFloatingPoi_);
 		for(unsigned int j=0; j<specifiedNuis_.size(); j++){
@@ -409,17 +412,43 @@ void MultiDimFit::doGrid(RooAbsReal &nll)
         }
     } else if (n == 2) {
         unsigned int sqrn = ceil(sqrt(double(points_)));
-        unsigned int ipoint = 0, nprint = ceil(0.005*sqrn*sqrn);
+        unsigned int ipoint = 0, nprint=1;//nprint = ceil(0.005*sqrn*sqrn);
         RooAbsReal::setEvalErrorLoggingMode(RooAbsReal::CountErrors);
         CloseCoutSentry sentry(verbose < 2);
         double deltaX =  (pmax[0]-pmin[0])/sqrn, deltaY = (pmax[1]-pmin[1])/sqrn;
-        for (unsigned int i = 0; i < sqrn; ++i) {
-            for (unsigned int j = 0; j < sqrn; ++j, ++ipoint) {
+				std::cout<< deltaX<<" "<<deltaY<<std::endl;
+        for (unsigned int i = 0; i < sqrn+1; ++i) {
+            for (unsigned int j = 0; j < sqrn+1; ++j, ++ipoint) {
                 if (ipoint < firstPoint_) continue;
                 if (ipoint > lastPoint_)  break;
                 *params = snap; 
-                double x =  pmin[0] + (i+0.5)*deltaX; 
-                double y =  pmin[1] + (j+0.5)*deltaY; 
+        //        double x =  pmin[0] + (i+0.5)*deltaX; 
+        //        double y =  pmin[1] + (j+0.5)*deltaY; 
+                double x =  pmin[0] + (j)*deltaX; 
+                double y =  pmin[1] + (i)*deltaY; 
+								if (pmax[0]==1 && pmax[1]==1){
+								if ( (fabs(x)+fabs(y)-1 )<0.0001){
+							   if(x>0.) x -= 0.00001;
+  	             else if(x<0.) x += 0.00001;
+    	           if(y>0.) y -= 0.00001;
+      	         else if(y<0.) y += 0.00001;
+								}
+                else if ( fabs(x)+fabs(y)-1 > -0.01)
+                 continue;
+								}
+								//if (pmax[0]==1 ){
+								//if ( (fabs(x)-1 )<0.0001){
+							  // if(x>0.) x -= 0.00001;
+  	            // else if(x<0.) x += 0.00001;
+								//}
+								//}
+								//if (pmax[1]==1 ){
+								//if ( (fabs(y)-1 )<0.0001){
+							  // if(y>0.) y -= 0.00001;
+  	            // else if(y<0.) y += 0.00001;
+								//}
+								//}
+
                 if (verbose && (ipoint % nprint == 0)) {
                          fprintf(sentry.trueStdOut(), "Point %d/%d, (i,j) = (%d,%d), %s = %f, %s = %f\n",
                                         ipoint,sqrn*sqrn, i,j, poiVars_[0]->GetName(), x, poiVars_[1]->GetName(), y);
@@ -466,6 +495,7 @@ void MultiDimFit::doGrid(RooAbsReal &nll)
                 bool ok = fastScan_ || skipme ? true :  minim.minimize(verbose-1);
                 if (ok) {
                     deltaNLL_ = nll.getVal() - nll0;
+                    NLL_ = nll0;
                     double qN = 2*(deltaNLL_);
                     double prob = ROOT::Math::chisquared_cdf_c(qN, n+nOtherFloatingPoi_);
 		    for(unsigned int j=0; j<specifiedNuis_.size(); j++){

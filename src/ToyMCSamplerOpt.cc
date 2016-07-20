@@ -133,6 +133,7 @@ toymcoptutils::SinglePdfGenInfo::generateAsimov(RooRealVar *&weightVar, double w
 {
     if (mode_ == Counting) return generateCountingAsimov();
     int nPA = runtimedef::get("TMCSO_PseudoAsimov");
+		cout << "xiaomeng "<<nPA<<endl;
     if (observables_.getSize() > 1 && runtimedef::get("TMCSO_AdaptivePseudoAsimov")) {
         int nbins = 1;
         RooLinkedListIter iter = observables_.iterator(); 
@@ -198,6 +199,7 @@ toymcoptutils::SinglePdfGenInfo::generateWithHisto(RooRealVar *&weightVar, bool 
         histoSpec_->SetDirectory(0);
     } 
 
+		cout << "xiaomeng generating with histos"<<endl;
     double expectedEvents = pdf_->expectedEvents(observables_);
     histoSpec_->Scale(expectedEvents/ histoSpec_->Integral("width")); 
     RooArgSet obsPlusW(obs); obsPlusW.add(*weightVar);
@@ -205,6 +207,7 @@ toymcoptutils::SinglePdfGenInfo::generateWithHisto(RooRealVar *&weightVar, bool 
     RooAbsArg::setDirtyInhibit(true); // don't propagate dirty flags while filling histograms 
     switch (obs.getSize()) {
         case 1:
+						cout << "xiaomeng "<< histoSpec_->GetNbinsX()<<endl;
             for (int i = 1, n = histoSpec_->GetNbinsX(); i <= n; ++i) {
                 x->setVal(histoSpec_->GetXaxis()->GetBinCenter(i));
                 double w = histoSpec_->GetXaxis()->GetBinWidth(i);

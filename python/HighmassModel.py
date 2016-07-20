@@ -8,6 +8,8 @@ class HighmassModel(PhysicsModel):
         self.mHRange = []
         self.muAsPOI = False
         self.muFloating = False
+        self.meanAsPOI = False
+        self.widthAsPOI = False
         self.pois = {}
         self.verbose = False
     def setModelBuilder(self, modelBuilder):
@@ -27,6 +29,10 @@ class HighmassModel(PhysicsModel):
                 print "Will consider the signal strength as a parameter of interest"
                 self.muAsPOI = True
                 self.muFloating = True
+            if 'mwAsPOI' in po: 
+                print "Will consider the mean and width as parameter of interest"
+                self.meanAsPOI = True
+                self.widthAsPOI= True
             
     def doParametersOfInterest(self):
         """Create POI and other parameters, and define the POI set."""
@@ -34,7 +40,16 @@ class HighmassModel(PhysicsModel):
             print "have r inside"
         else:
             self.modelBuilder.doVar("r[1,0,1000]")
-        poi = "r"
+        if self.muAsPOI: 
+            poi = "r"
+        if self.meanAsPOI: 
+          if self.modelBuilder.out.var("mean_pole"):
+              print "have mean inside"
+          else:
+              self.modelBuilder.doVar("mean_pole[500,0,600]")
+              self.modelBuilder.doVar("sigma_pole[20,0,600]")
+          poi = "mean_pole"
+          poi += ",sigma_pole"
         
         self.modelBuilder.doSet("POI",poi)
         

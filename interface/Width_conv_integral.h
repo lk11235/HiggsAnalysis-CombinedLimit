@@ -18,36 +18,57 @@
 #include "TH1.h"
 #include "RooDataHist.h"
 #include "RooHistFunc.h"
+#include "TGraph.h"
+#include "TSpline.h"
 using namespace RooFit;
 
-class RooHighmass_conv : public RooAbsPdf {
+class Width_conv_integral : public RooAbsPdf {
 protected:
 
  RooRealProxy xreco;
- //RooRealProxy xgen;
+ RooRealProxy mean;
+ RooRealProxy width;
+ RooRealProxy coupl;
   RooListProxy _coefList ;  //  List of funcficients
   TIterator* _coefIter ;    //! Iterator over funcficient lis 	
-//	RooRealVar *xgencopy;
 	double xgen_min;
 	double xgen_max;
+	double xreco_min;
+	double xreco_max;
+	double nbkg;
+	double nsig;
+	TGraph cosspline;
+	TGraph sinspline;
+	TGraph eff_bkg;
+	TGraph eff_sig;
+	double bkgcont[1400];
+	double coscont[1400];
+	double sincont[1400];
+	double eff_bkgcont[1400];
+	double eff_sigcont[1400];
+	double resoval[201][1400];
+	double bkg_int;
   Double_t evaluate() const ;
 public:
-  RooHighmass_conv() {} ; 
-  RooHighmass_conv(const char *name, const char *title,
+  Width_conv_integral() {} ; 
+  Width_conv_integral(const char *name, const char *title,
 		       RooAbsReal& _xreco,
-//		       RooAbsReal& _xgen,
-			const RooArgList& inCoefList);
+		       RooAbsReal& _mean,
+		       RooAbsReal& _width,
+		       RooAbsReal& _coupl,
+			const RooArgList& inCoefList, TGraph _cosspline, TGraph _sinspline, TGraph effsig, TGraph effbkg); 
 		    
-  RooHighmass_conv(const RooHighmass_conv& other, const char* name=0) ;
-  virtual TObject* clone(const char* newname) const { return new RooHighmass_conv(*this,newname); }
-  inline virtual ~RooHighmass_conv() {}
+  Width_conv_integral(const Width_conv_integral& other, const char* name=0) ;
+  virtual TObject* clone(const char* newname) const { return new Width_conv_integral(*this,newname); }
+  inline virtual ~Width_conv_integral() {}
   
   Int_t getAnalyticalIntegral(RooArgSet& allVars, RooArgSet& analVars, const char* rangeName=0) const ;
   Double_t analyticalIntegral(Int_t code, const char* rangeName=0) const ;
 
+
 private:
 
-  ClassDef(RooHighmass_conv,1) // Your description goes here...
+  ClassDef(Width_conv_integral,1) // Your description goes here...
 };
  
 //#endif
