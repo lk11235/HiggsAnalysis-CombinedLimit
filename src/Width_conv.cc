@@ -143,15 +143,21 @@ Double_t Width_conv::evaluate() const
 
 
 
-	double low_edge = mean-10*width;
-	double high_edge = mean+10*width;
 	double left_edge = 0.;
 	double left_width =  0;
 	double right_edge = 0.;
 	double right_width =  0;
-	int  re = (xreco-xreco_min)/((xreco_max-xreco_min)/70.); 
+//	int  re = (xreco-xreco_min)/((xreco_max-xreco_min)/70.); 
 
 	{
+		int nbinsC=40;
+		double bwC= 0.5;
+		if(width>1.){
+			nbinsC=int(20*width*2);
+			bwC=20./double(nbinsC);
+		}
+		double low_edge = mean-10*width-0.5*bwC*width;
+		double high_edge = mean+10*width+0.5*bwC*width;
 		int nl = (low_edge- xgen_min-0.5*genwid)/genwid;
 		int nr = (high_edge-xgen_min-0.5*genwid)/genwid+1; 
 		left_edge = nl*genwid+xgen_min+0.5*genwid;
@@ -168,13 +174,7 @@ Double_t Width_conv::evaluate() const
 
 		//		double eff_T2 = eff_bkg.Eval(mean);
 
-		int nbinsC=40;
-		double bwC= 0.5;
-		if(width>0.2){
-			nbinsC=80;
-			bwC=0.25;
-		}
-		for(int k=0;k<nbinsC;k++){
+		for(int k=0;k<nbinsC+1;k++){
 			double cvalue = mean-10*width + k*width*bwC;
 			if(cvalue < xgen_min || cvalue>=xgen_max)
 				continue;
@@ -261,7 +261,8 @@ Double_t Width_conv::evaluate() const
 		double sinsig = b/TMath::Sqrt(a*a+b*b);
 
 		double gen= nbkg*T2 * eff_T2+ fabs(coupl) * nsig*T1 *eff_T1+ 2.*sqrt(eff_T2*eff_T1*T2*T1*nbkg*nsig*coupl)*(cossig*T3+sinsig*T4); 
-		double reso = resoval[re][i]; 
+		//double reso = resoval[re][i]; 
+		double reso = dynamic_cast<const RooAbsPdf*>(_coefList.at(2))->getVal(xreco.arg());
 		value += reso*gen*genwid;
 	}
 	return value;
@@ -292,14 +293,26 @@ Double_t Width_conv::analyticalIntegral(Int_t code, const char* rangeName) const
 				RooRealVar *xgencopy= (RooRealVar*)arglist->Next();
 
 				double genwid = (xgen_max-xgen_min)/100.;
-				double low_edge = mean-10*width;
-				double high_edge = mean+10*width;
+		//		double low_edge = mean-10*width;
+		//		double high_edge = mean+10*width;
 				double left_edge = 0.;
 				double left_width =  0;
 				double right_edge = 0.;
 				double right_width =  0;
 
 				{
+		int nbinsC=40;
+		double bwC= 0.5;
+	//	if(width>0.2){
+	//		nbinsC=80;
+	//		bwC=0.25;
+	//	}
+		if(width>1.){
+			nbinsC=int(20*width*2);
+			bwC=20./double(nbinsC);
+		}
+		double low_edge = mean-10*width-0.5*bwC*width;
+		double high_edge = mean+10*width+0.5*bwC*width;
 					int nl = (low_edge- xgen_min-0.5*genwid)/genwid;
 					int nr = (high_edge-xgen_min-0.5*genwid)/genwid+1; 
 					left_edge = nl*genwid+xgen_min+0.5*genwid;
@@ -310,13 +323,7 @@ Double_t Width_conv::analyticalIntegral(Int_t code, const char* rangeName) const
 					right_width = right_edge - high_edge;
 
 
-		int nbinsC=40;
-		double bwC= 0.5;
-		if(width>0.2){
-			nbinsC=80;
-			bwC=0.25;
-		}
-		for(int k=0;k<nbinsC;k++){
+		for(int k=0;k<nbinsC+1;k++){
 						double cvalue = mean-10*width + k*width*bwC;
 						if(cvalue < xgen_min || cvalue>=xgen_max)
 							continue;
