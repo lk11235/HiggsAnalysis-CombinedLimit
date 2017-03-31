@@ -102,7 +102,7 @@ template<typename T> FastHisto_t<T>::FastHisto_t(const FastHisto_t &other) :
 {}
 
 template<typename T> int FastHisto_t<T>::FindBin(const T &x) const {
-    auto match = std::lower_bound(binEdges_.begin(), binEdges_.end(), x);
+    auto match = std::upper_bound(binEdges_.begin(), binEdges_.end(), x);
     if (match == binEdges_.begin()) return -1;
     if (match == binEdges_.end()) return (this->values_).size();
     return match - binEdges_.begin() - 1;
@@ -110,7 +110,7 @@ template<typename T> int FastHisto_t<T>::FindBin(const T &x) const {
 
 
 template<typename T> T FastHisto_t<T>::GetAt(const T &x) const {
-    auto match = std::lower_bound(binEdges_.begin(), binEdges_.end(), x);
+    auto match = std::upper_bound(binEdges_.begin(), binEdges_.end(), x);
     if (match == binEdges_.begin() || match == binEdges_.end()) return T(0.0);
     return (this->values_)[match - binEdges_.begin() - 1];
 }
@@ -174,23 +174,23 @@ template<typename T> FastHisto2D_t<T>::FastHisto2D_t(const FastHisto2D_t &other)
 {}
 
 template<typename T> T FastHisto2D_t<T>::GetAt(const T &x, const T &y) const {
-    auto matchx = std::lower_bound(binEdgesX_.begin(), binEdgesX_.end(), x);
+    auto matchx = std::upper_bound(binEdgesX_.begin(), binEdgesX_.end(), x);
     if (matchx == binEdgesX_.begin() || matchx == binEdgesX_.end()) return T(0.0);
     int ix = (matchx - binEdgesX_.begin() - 1);
-    auto matchy = std::lower_bound(binEdgesY_.begin(), binEdgesY_.end(), y);
+    auto matchy = std::upper_bound(binEdgesY_.begin(), binEdgesY_.end(), y);
     if (matchy == binEdgesY_.begin() || matchy == binEdgesY_.end()) return T(0.0);
     int iy = (matchy - binEdgesY_.begin() - 1);
     return (this->values_)[ix * binY_ + iy];
 }
 
 template<typename T> int FastHisto2D_t<T>::FindBinX(const T &t) const {
-  auto match = std::lower_bound(binEdgesX_.begin(), binEdgesX_.end(), t);
+  auto match = std::upper_bound(binEdgesX_.begin(), binEdgesX_.end(), t);
   if (match == binEdgesX_.begin()) return -1;
   if (match == binEdgesX_.end()) return binX_;
   return match - binEdgesX_.begin() - 1;
 }
 template<typename T> int FastHisto2D_t<T>::FindBinY(const T &t) const {
-  auto match = std::lower_bound(binEdgesY_.begin(), binEdgesY_.end(), t);
+  auto match = std::upper_bound(binEdgesY_.begin(), binEdgesY_.end(), t);
   if (match == binEdgesY_.begin()) return -1;
   if (match == binEdgesY_.end()) return binY_;
   return match - binEdgesY_.begin() - 1;
@@ -243,7 +243,7 @@ template<typename T> T FastHisto2D_t<T>::GetMaxOnXY() const {
 }
 
 template<typename T> T FastHisto2D_t<T>::GetMaxOnX(const T &y) const {
-    auto matchy = std::lower_bound(binEdgesY_.begin(), binEdgesY_.end(), y);
+    auto matchy = std::upper_bound(binEdgesY_.begin(), binEdgesY_.end(), y);
     if (matchy == binEdgesY_.begin() || matchy == binEdgesY_.end()) return T(0.0);
     int iy = (matchy - binEdgesY_.begin() - 1);
     T ret = 0.0;
@@ -254,7 +254,7 @@ template<typename T> T FastHisto2D_t<T>::GetMaxOnX(const T &y) const {
 }
 
 template<typename T> T FastHisto2D_t<T>::GetMaxOnY(const T &x) const {
-    auto matchx = std::lower_bound(binEdgesX_.begin(), binEdgesX_.end(), x);
+    auto matchx = std::upper_bound(binEdgesX_.begin(), binEdgesX_.end(), x);
     if (matchx == binEdgesX_.begin() || matchx == binEdgesX_.end()) return T(0.0);
     int ix = (matchx - binEdgesX_.begin() - 1);
     return *std::max( &(this->values_)[ix * binY_], &(this->values_)[(ix+1) * binY_] );
@@ -311,32 +311,32 @@ template<typename T> FastHisto3D_t<T>::FastHisto3D_t(const FastHisto3D_t &other)
 {}
 
 template<typename T> T FastHisto3D_t<T>::GetAt(const T &x, const T &y, const T &z) const {
-    auto matchx = std::lower_bound(binEdgesX_.begin(), binEdgesX_.end(), x);
+    auto matchx = std::upper_bound(binEdgesX_.begin(), binEdgesX_.end(), x);
     if (matchx == binEdgesX_.begin() || matchx == binEdgesX_.end()) return T(0.0);
     int ix = (matchx - binEdgesX_.begin() - 1);
-    auto matchy = std::lower_bound(binEdgesY_.begin(), binEdgesY_.end(), y);
+    auto matchy = std::upper_bound(binEdgesY_.begin(), binEdgesY_.end(), y);
     if (matchy == binEdgesY_.begin() || matchy == binEdgesY_.end()) return T(0.0);
     int iy = (matchy - binEdgesY_.begin() - 1);
-    auto matchz = std::lower_bound(binEdgesZ_.begin(), binEdgesZ_.end(), z);
+    auto matchz = std::upper_bound(binEdgesZ_.begin(), binEdgesZ_.end(), z);
     if (matchz == binEdgesZ_.begin() || matchz == binEdgesZ_.end()) return T(0.0);
     int iz = (matchz - binEdgesZ_.begin() - 1);
     return (this->values_)[(ix * binY_ +iy)*binZ_ + iz];
 }
 
 template<typename T> int FastHisto3D_t<T>::FindBinX(const T &t) const {
-  auto match = std::lower_bound(binEdgesX_.begin(), binEdgesX_.end(), t);
+  auto match = std::upper_bound(binEdgesX_.begin(), binEdgesX_.end(), t);
   if (match == binEdgesX_.begin()) return -1;
   if (match == binEdgesX_.end()) return binX_;
   return match - binEdgesX_.begin() - 1;
 }
 template<typename T> int FastHisto3D_t<T>::FindBinY(const T &t) const {
-  auto match = std::lower_bound(binEdgesY_.begin(), binEdgesY_.end(), t);
+  auto match = std::upper_bound(binEdgesY_.begin(), binEdgesY_.end(), t);
   if (match == binEdgesY_.begin()) return -1;
   if (match == binEdgesY_.end()) return binY_;
   return match - binEdgesY_.begin() - 1;
 }
 template<typename T> int FastHisto3D_t<T>::FindBinZ(const T &t) const {
-  auto match = std::lower_bound(binEdgesZ_.begin(), binEdgesZ_.end(), t);
+  auto match = std::upper_bound(binEdgesZ_.begin(), binEdgesZ_.end(), t);
   if (match == binEdgesZ_.begin()) return -1;
   if (match == binEdgesZ_.end()) return binZ_;
   return match - binEdgesZ_.begin() - 1;
