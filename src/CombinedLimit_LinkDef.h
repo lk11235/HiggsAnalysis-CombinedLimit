@@ -4,12 +4,10 @@
 #include "../interface/VerticalInterpHistPdf.h"
 #include "../interface/AsymPow.h"
 #include "../interface/CombDataSetFactory.h"
-#include "../interface/TH1Keys.h"
 #include "../interface/RooSimultaneousOpt.h"
 #include "../interface/SimpleCacheSentry.h"
 #include "../interface/th1fmorph.h"
 #include "../interface/HZZ4LRooPdfs.h"
-#include "../interface/HWWLVJRooPdfs.h"
 #include "../interface/HZZ2L2QRooPdfs.h"
 #include "../interface/HGGRooPdfs.h"
 #include "../interface/HZGRooPdfs.h"
@@ -28,13 +26,11 @@
 #include "../interface/RooParametricHist.h"
 #include "../interface/RooBernsteinFast.h"
 #include "../interface/SimpleGaussianConstraint.h"
-#include "../interface/AtlasPdfs.h"
 #include "../interface/HZZ4L_RooSpinZeroPdf.h"
 #include "../interface/HZZ4L_RooSpinZeroPdf_phase.h"
 #include "../interface/HZZ4L_RooSpinZeroPdf_2D.h"
 #include "../interface/HZZ4L_RooSpinZeroPdf_1D.h"
 #include "../interface/HZZ4L_RooHighmass.h"
-#include "../interface/HWWLVJJRooPdfs.h"
 #include "../interface/RooMorphingPdf.h"
 
 #ifdef __CINT__
@@ -68,7 +64,6 @@
 #pragma link C++ class Width_integral+;
 #pragma link C++ class AsymPow+;
 #pragma link C++ class CombDataSetFactory+;
-#pragma link C++ class TH1Keys+;
 #pragma link C++ class RooSimultaneousOpt+;
 #pragma link C++ class SimpleGaussianConstraint+;
 #pragma link C++ class SimpleCacheSentry+;

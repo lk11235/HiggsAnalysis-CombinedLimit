@@ -21,6 +21,8 @@
 
 ClassImp(VerticalInterpHistPdf)
 
+using namespace std;
+
 
 //_____________________________________________________________________________
 VerticalInterpHistPdf::VerticalInterpHistPdf() :

@@ -14,6 +14,7 @@
 #include "TSpline.h"
 
 using namespace TMath;
+using namespace std;
 
 ClassImp(Width_conv_integral) 
 

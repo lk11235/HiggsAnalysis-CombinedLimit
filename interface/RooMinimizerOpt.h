@@ -1,3 +1,6 @@
+//https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65899#c2
+#include <sstream>
+
 #ifndef HiggsAnalysis_CombinedLimit_RooMinimizerOpt
 #define HiggsAnalysis_CombinedLimit_RooMinimizerOpt
 

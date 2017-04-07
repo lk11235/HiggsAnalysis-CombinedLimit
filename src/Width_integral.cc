@@ -19,6 +19,8 @@
 #include "RooListProxy.h" 
 #include "RooHistFunc.h" 
 
+using namespace std;
+
 ClassImp(Width_integral) 
 
 	Width_integral::Width_integral(const char *name, const char *title, 

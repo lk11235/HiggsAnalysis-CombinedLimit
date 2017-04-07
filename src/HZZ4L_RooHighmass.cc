@@ -10,6 +10,7 @@
 #include "RooExtendPdf.h"
 
 using namespace TMath;
+using namespace std;
 
 ClassImp(HZZ4L_RooHighmass) 
 
