@@ -23,12 +23,14 @@ CMSHistErrorPropagator::CMSHistErrorPropagator(const char* name,
                                                const char* title,
                                                RooRealVar& x,
                                                RooArgList const& funcs,
-                                               RooArgList const& coeffs)
+                                               RooArgList const& coeffs,
+                                               const std::vector<std::vector<unsigned>>& mergebins)
     : RooAbsReal(name, title),
       x_("x", "", this, x),
       funcs_("funcs", "", this),
       coeffs_("coeffs", "", this),
       binpars_("binpars", "", this),
+      mergebins_(sortandvalidatemergebins(mergebins)),
       sentry_(TString(name) + "_sentry", ""),
       binsentry_(TString(name) + "_binsentry", ""),
       initialized_(false),
@@ -45,6 +47,7 @@ CMSHistErrorPropagator::CMSHistErrorPropagator(
       coeffs_("coeffs", this, other.coeffs_),
       binpars_("binpars", this, other.binpars_),
       bintypes_(other.bintypes_),
+      mergebins_(other.mergebins_),
       sentry_(name ? TString(name) + "_sentry" : TString(other.sentry_.GetName()), ""),
       binsentry_(name ? TString(name) + "_binsentry" : TString(other.binsentry_.GetName()), ""),
       initialized_(false),
@@ -76,6 +79,8 @@ void CMSHistErrorPropagator::initialize() const {
         if (bintypes_[j][i] >= 1 && bintypes_[j][i] < 4) {
           vbinpars_[j][i] = dynamic_cast<RooAbsReal *>(binpars_.at(r));
           ++r;
+        } else if (bintypes_[j][i] >= 10000) {
+          vbinpars_[j][i] = vbinpars_[bintypes_[j][i]-10000][i];
         }
       }
     }
@@ -123,7 +128,7 @@ void CMSHistErrorPropagator::updateCache(int eval) const {
 
     if (eval == 0 && bintypes_.size()) {
       for (unsigned j = 0; j < valsum_.size(); ++j) {
-        if (bintypes_[j][0] == 1) {
+        if (bintypes_[j][0] == 1 || (bintypes_[j][0] >= 10000 && bintypes_[bintypes_[j][0]-10000][0] == 1)) {
 #if HFVERBOSE > 1
           std::cout << "Bin " << j << "\n";
           printf(" | %.6f/%.6f/%.6f\n", valsum_[j], err2sum_[j], toterr_[j]);
@@ -157,9 +162,10 @@ void CMSHistErrorPropagator::updateCache(int eval) const {
     // bintypes might have size == 0 if we never ran setupBinPars()
     for (unsigned j = 0; j < bintypes_.size(); ++j) {
       cache_[j] = valsum_[j];
+
       if (bintypes_[j][0] == 0) {
         continue;
-      } else if (bintypes_[j][0] == 1) {
+      } else if (bintypes_[j][0] == 1 || (bintypes_[j][0] >= 10000 && bintypes_[bintypes_[j][0]-10000][0] == 1)) {
         double x = vbinpars_[j][0]->getVal();
         cache_[j] += toterr_[j] * x;
         // Only fill the scaledbinmods if we're in eval == 0 mode (i.e. need to
@@ -171,15 +177,20 @@ void CMSHistErrorPropagator::updateCache(int eval) const {
         }
       } else {
         for (unsigned i = 0; i < bintypes_[j].size(); ++i) {
-          if (bintypes_[j][i] == 2) {
+          if (bintypes_[j][i] == 2 || (bintypes_[j][i] >= 10000 && bintypes_[bintypes_[j][i]-10000][i] == 2)) {
             // Poisson: this is a multiplier on the process yield
             scaledbinmods_[i][j] = ((vbinpars_[j][i]->getVal() - 1.) *
                  vfuncs_[i]->cache()[j] * coeffvals_[i]);
             cache_[j] += scaledbinmods_[i][j];
-          } else if (bintypes_[j][i] == 3) {
+          } else if (bintypes_[j][i] == 3 || (bintypes_[j][i] >= 10000 && bintypes_[bintypes_[j][i]-10000][i] == 3)) {
             // Gaussian This is the addition of the scaled error
             scaledbinmods_[i][j] = vbinpars_[j][i]->getVal() * vfuncs_[i]->errors()[j] * coeffvals_[i];
             cache_[j] += scaledbinmods_[i][j];
+          } else {
+            if (bintypes_[j][i] >= 10000)
+              throw std::logic_error(TString::Format("bintypes_[j][i] == %d???", bintypes_[j][i]));
+            else
+              throw std::logic_error(TString::Format("bintypes_[j][i] == %d, bintypes_[%d][i] == %d???", bintypes_[j][i], bintypes_[j][i]-10000, bintypes_[bintypes_[j][i]-10000][i]));
           }
         }
       }
@@ -246,7 +257,7 @@ void CMSHistErrorPropagator::setAnalyticBarlowBeeston(bool flag) const {
   }
   if (flag && data_.size()) {
     for (unsigned j = 0; j < bintypes_.size(); ++j) {
-      if (bintypes_[j][0] == 1 && !vbinpars_[j][0]->isConstant()) {
+      if ((bintypes_[j][0] == 1 || (bintypes_[j][0] >= 10000 && bintypes_[bintypes_[j][0]-10000][0] == 1)) && !vbinpars_[j][0]->isConstant()) {
         bb_.use.push_back(j);
         double gobs_val = 0.;
         RooFIter iter = vbinpars_[j][0]->valueClientMIterator();
@@ -319,6 +330,8 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
   std::cout << std::string(60, '=') << "\n";
   std::cout << TString::Format("%-10s %-15s %-15s %-30s\n", "Bin", "Contents", "Error", "Notes");
 
+  std::vector<std::vector<double>> n_p_r_list(valsum_.size(), std::vector<double>(vfuncs_.size()));
+
   for (unsigned j = 0; j < valsum_.size(); ++j) {
     std::cout << TString::Format("%-10i %-15f %-15f %-30s\n", j, valsum_[j], toterr_[j], "total sum");
     double sub_sum = 0.;
@@ -349,6 +362,9 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
         "%-10i %-15f %-15f %-30s\n", j, n, std::sqrt(n),
         TString::Format("Unweighted events, alpha=%f", alpha).Data());
 
+    // Check if this error should be merged from another bin
+    int mergefrom = mergefrombin(j);
+
     if (n <= poissonThreshold) {
       std::cout << TString::Format("  %-30s\n", "=> Number of weighted events is below poisson threshold");
 
@@ -377,6 +393,7 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
         } else if (v_p > 0. && e_p > 0. && v_p >= (e_p*0.999)) {
           double n_p_r = int(0.5 + ((v_p * v_p) / (e_p * e_p)));
           double alpha_p_r = v_p / n_p_r;
+          n_p_r_list[j][i] = n_p_r;
           std::cout << TString::Format(
               "    %-20s %-15f %-15f %-30s\n", "", n_p_r, std::sqrt(n_p_r),
               TString::Format("Unweighted events, alpha=%f", alpha_p_r).Data());
@@ -384,37 +401,75 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
             double sigma = 7.;
             double rmin = 0.5*ROOT::Math::chisquared_quantile(ROOT::Math::normal_cdf_c(sigma), n_p_r * 2.);
             double rmax = 0.5*ROOT::Math::chisquared_quantile(1. - ROOT::Math::normal_cdf_c(sigma), n_p_r * 2. + 2.);
-            RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", n_p_r, rmin, rmax);
-            RooConstVar *cvar = new RooConstVar(TString::Format("%g", 1. / n_p_r), "", 1. / n_p_r);
-            RooProduct *prod = new RooProduct(TString::Format("%s_prod", var->GetName()), "", RooArgList(*var, *cvar));
-            var->addOwnedComponents(RooArgSet(*prod, *cvar));
-            var->setAttribute("createPoissonConstraint");
-            res->addOwned(*var);
-            binpars_.add(*prod);
-
-            std::cout << TString::Format(
-                "      => Product of %s[%.2f,%.2f,%.2f] and const [%.4f] to be poisson constrained\n",
-                var->GetName(), var->getVal(), var->getMin(), var->getMax(), cvar->getVal());
-            bintypes_[j][i] = 2;
+            if (mergefrom < 0) {
+              RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", n_p_r, rmin, rmax);
+              RooConstVar *cvar = new RooConstVar(TString::Format("%g", 1. / n_p_r), "", 1. / n_p_r);
+              RooProduct *prod = new RooProduct(TString::Format("%s_prod", var->GetName()), "", RooArgList(*var, *cvar));
+              var->addOwnedComponents(RooArgSet(*prod, *cvar));
+              var->setAttribute("createPoissonConstraint");
+              res->addOwned(*var);
+              binpars_.add(*prod);
+              std::cout << TString::Format(
+                  "      => Product of %s[%.2f,%.2f,%.2f] and const [%.4f] to be poisson constrained\n",
+                  var->GetName(), var->getVal(), var->getMin(), var->getMax(), cvar->getVal());
+              bintypes_[j][i] = 2;
+            } else if (bintypes_[mergefrom][i] == 2) {
+              if (n_p_r_list[mergefrom][i] == n_p_r) {
+                std::cout << TString::Format(
+                    "      => Copying poisson constraint from bin %d\n",
+                    mergefrom);
+                bintypes_[j][i] = 10000 + mergefrom;
+              } else {
+                throw std::invalid_argument(TString::Format(
+                  "Can't merge bin %d with bin %d, which are poisson constrained with different ratios of contents to errors.",
+                j, mergefrom));
+              }
+            } else {
+              throw std::invalid_argument(TString::Format(
+                  "Can't merge bin %d, which uses strategy 2, with bin %d, which uses a different strategy %d.",
+              j, mergefrom, bintypes_[mergefrom][i]));
+            }
           } else {
+            if (mergefrom < 0) {
+              RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", 0, -7, 7);
+              std::cout << TString::Format(
+                  "      => Parameter %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
+                  var->GetName(), var->getVal(), var->getMin(), var->getMax());
+              var->setAttribute("createGaussianConstraint");
+              res->addOwned(*var);
+              binpars_.add(*var);
+              bintypes_[j][i] = 3;
+            } else if (bintypes_[mergefrom][i] == 3) {
+              std::cout << TString::Format(
+                  "      => Copying gaussian constraint from bin %d\n",
+                  mergefrom);
+              bintypes_[j][i] = 10000 + mergefrom;
+            } else {
+              throw std::invalid_argument(TString::Format(
+                  "Can't merge bin %d, which uses strategy 3, with bin %d, which uses a different strategy %d.",
+              j, mergefrom, bintypes_[mergefrom][i]));
+            }
+          }
+        } else if (v_p >= 0 && e_p > v_p) {
+          if (mergefrom < 0) {
             RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", 0, -7, 7);
             std::cout << TString::Format(
-                "      => Parameter %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
+                "      => Poisson not viable, %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
                 var->GetName(), var->getVal(), var->getMin(), var->getMax());
             var->setAttribute("createGaussianConstraint");
             res->addOwned(*var);
             binpars_.add(*var);
             bintypes_[j][i] = 3;
+          } else if (bintypes_[mergefrom][i] == 3) {
+            std::cout << TString::Format(
+                "      => Copying gaussian constraint from bin %d\n",
+                mergefrom);
+            bintypes_[j][i] = 10000 + mergefrom;
+          } else {
+            throw std::invalid_argument(TString::Format(
+                "Can't merge bin %d, which uses strategy 3, with bin %d, which uses a different strategy %d.",
+            j, mergefrom, bintypes_[mergefrom][i]));
           }
-        } else if (v_p >= 0 && e_p > v_p) {
-          RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i_%s", this->GetName(), j, proc.c_str()), "", 0, -7, 7);
-          std::cout << TString::Format(
-              "      => Poisson not viable, %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
-              var->GetName(), var->getVal(), var->getMin(), var->getMax());
-          var->setAttribute("createGaussianConstraint");
-          res->addOwned(*var);
-          binpars_.add(*var);
-          bintypes_[j][i] = 3;
         } else{
           std::cout << "      => ERROR: shouldn't be here\n";
         }
@@ -422,15 +477,26 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
 
       }
     } else if (toterr_[j] > 0.) {
-      bintypes_[j][0] = 1;
-      RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i", this->GetName(), j), "", 0, -7, 7);
-      std::cout << TString::Format(
-          "  => Total parameter %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
-          var->GetName(), var->getVal(), var->getMin(), var->getMax());
-      var->setAttribute("createGaussianConstraint");
-      var->setAttribute("forBarlowBeeston");
-      res->addOwned(*var);
-      binpars_.add(*var);
+      if (mergefrom < 0) {
+        bintypes_[j][0] = 1;
+        RooRealVar *var = new RooRealVar(TString::Format("%s_bin%i", this->GetName(), j), "", 0, -7, 7);
+        std::cout << TString::Format(
+            "  => Total parameter %s[%.2f,%.2f,%.2f] to be gaussian constrained\n",
+            var->GetName(), var->getVal(), var->getMin(), var->getMax());
+        var->setAttribute("createGaussianConstraint");
+        var->setAttribute("forBarlowBeeston");
+        res->addOwned(*var);
+        binpars_.add(*var);
+      } else if (bintypes_[mergefrom][0] == 1) {
+        std::cout << TString::Format(
+            "      => Copying overall gaussian constraint from bin %d\n",
+            mergefrom);
+        bintypes_[j][0] = 10000 + mergefrom;
+      } else {
+        throw std::invalid_argument(TString::Format(
+            "Can't merge bin %d, which uses strategy 1, with bin %d, which uses a different strategy %d.",
+        j, mergefrom, bintypes_[mergefrom][0]));
+      }
     }
     std::cout << std::string(60, '-') << "\n";
   }
@@ -445,6 +511,8 @@ RooArgList * CMSHistErrorPropagator::setupBinPars(double poissonThreshold) {
       if (bintypes_[j][i] >= 1 && bintypes_[j][i] < 4) {
         vbinpars_[j][i] = dynamic_cast<RooAbsReal *>(binpars_.at(r));
         ++r;
+      } else if (bintypes_[j][i] >= 10000) {
+        vbinpars_[j][i] = vbinpars_[bintypes_[j][i]-10000][i];
       }
     }
   }
@@ -546,6 +614,40 @@ RooArgList CMSHistErrorPropagator::wrapperList() const {
     }
   }
   return result;
+}
+
+std::vector<std::vector<unsigned>> CMSHistErrorPropagator::sortandvalidatemergebins(const std::vector<std::vector<unsigned>>& mergebins) {
+  std::vector<std::vector<unsigned>> result;
+  //copy the input mergebins, get rid of any empty lists of bins to merge
+  copy_if(mergebins.begin(), mergebins.end(), std::back_inserter(result), [](std::vector<unsigned> v){return v.size()>0;});
+
+  std::unordered_set<unsigned> seen;
+  for (std::vector<unsigned>& binstomerge : result) {
+    //sort each list of bins to merge
+    std::sort(binstomerge.begin(), binstomerge.end());
+    //and make sure there are no duplicates (e.g. bin 3 merged with itself, or with both bin 2 and 5 in separate lists)
+    for (unsigned bin : binstomerge) {
+      if (seen.count(bin)) {
+        throw std::invalid_argument(TString::Format("Duplicate bin %d in binstomerge", bin));
+      }
+      seen.insert(bin);
+    }
+  }
+
+  //finally sort the overall vector based on the first bin in each individual list
+  //note v1[0] and v2[0] are safe because of the copy_if above
+  std::sort(result.begin(), result.end(), [](const std::vector<unsigned>& v1, const std::vector<unsigned>& v2){return v1[0] < v2[0];});
+
+  return result;
+}
+
+unsigned CMSHistErrorPropagator::mergefrombin(unsigned j) const {
+  for (const std::vector<unsigned>& binstomerge : mergebins_) {
+    for (unsigned i = 1; i < binstomerge.size(); i++) {
+      if (binstomerge[i] == j) return binstomerge[0];
+    }
+  }
+  return -1;
 }
 
 #undef HFVERBOSE

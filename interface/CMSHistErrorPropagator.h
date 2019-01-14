@@ -37,7 +37,8 @@ public:
   CMSHistErrorPropagator();
 
   CMSHistErrorPropagator(const char* name, const char* title, RooRealVar& x,
-                         RooArgList const& funcs, RooArgList const& coeffs);
+                         RooArgList const& funcs, RooArgList const& coeffs,
+                         const std::vector<std::vector<unsigned>>& mergebins = std::vector<std::vector<unsigned>>());
 
   CMSHistErrorPropagator(CMSHistErrorPropagator const& other, const char* name = 0);
 
@@ -84,6 +85,7 @@ public:
   mutable std::vector<RooAbsReal const*> vcoeffs_; //!
   mutable std::vector<std::vector<RooAbsReal *>> vbinpars_; //!
   std::vector<std::vector<unsigned>> bintypes_;
+  const std::vector<std::vector<unsigned>> mergebins_;
 
   mutable std::vector<double> coeffvals_; //!
   mutable FastHisto valsum_; //!
@@ -109,6 +111,8 @@ public:
 
   void runBarlowBeeston() const;
 
+  static std::vector<std::vector<unsigned>> sortandvalidatemergebins(const std::vector<std::vector<unsigned>>& mergebins);
+  unsigned mergefrombin(unsigned j) const;
 
  private:
   ClassDef(CMSHistErrorPropagator,1)

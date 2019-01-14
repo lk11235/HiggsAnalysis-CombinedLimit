@@ -11,6 +11,16 @@ def RooArgSet_add_patched(self, obj, *args, **kwargs):
         return RooArgSet_add_original(self, obj, *args, **kwargs)
 ROOT.RooArgSet.add = RooArgSet_add_patched
 
+def vectorvectorunsigned(listoflists):
+    print listoflists
+    result = ROOT.vector(ROOT.vector("unsigned"))()
+    for sublist in listoflists:
+        subvector = ROOT.vector("unsigned")()
+        for item in sublist:
+            subvector.push_back(item)
+        result.push_back(subvector)
+    return result
+
 from HiggsAnalysis.CombinedLimit.ModelTools import ModelBuilder
 
 class ShapeBuilder(ModelBuilder):
@@ -61,7 +71,7 @@ class ShapeBuilder(ModelBuilder):
             bbb_args = None
             channelBinParFlag = b in self.DC.binParFlags.keys()
             if channelBinParFlag:
-                print 'Channel %s will use autoMCStats with settings: event-threshold=%g, include-signal=%i, hist-mode=%i' % ((b,)+self.DC.binParFlags[b])
+                print 'Channel %s will use autoMCStats with settings: event-threshold=%g, include-signal=%i, hist-mode=%i, merge-bins=%s' % ((b,)+self.DC.binParFlags[b])
             for p in self.DC.exp[b].keys(): # so that we get only self.DC.processes contributing to this bin
                 if self.DC.exp[b][p] == 0: continue
                 if self.physics.getYieldScale(b,p) == 0: continue # exclude really the pdf
@@ -98,7 +108,7 @@ class ShapeBuilder(ModelBuilder):
                     sigcoeffs.append(coeff)
             if self.options.verbose > 1: print "Creating RooAddPdf %s with %s elements" % ("pdf_bin"+b, coeffs.getSize())
             if channelBinParFlag: 
-                prop = self.addObj(ROOT.CMSHistErrorPropagator, "prop_bin%s" % b, "", pdfs.at(0).getXVar(), pdfs, coeffs)
+                prop = self.addObj(ROOT.CMSHistErrorPropagator, "prop_bin%s" % b, "", pdfs.at(0).getXVar(), pdfs, coeffs, vectorvectorunsigned(self.DC.binParFlags[b][3]))
                 prop.setAttribute('CachingPdf_Direct', True)
                 if self.DC.binParFlags[b][0] >= 0.:
                     bbb_args = prop.setupBinPars(self.DC.binParFlags[b][0])

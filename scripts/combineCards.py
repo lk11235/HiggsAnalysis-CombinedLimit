@@ -277,6 +277,8 @@ for bpf in binParFlags.iterkeys():
       print "%s autoMCStats %g %i" % (bpf,binParFlags[bpf][0], binParFlags[bpf][1])
     if len(binParFlags[bpf]) == 3:
       print "%s autoMCStats %g %i %i" % (bpf,binParFlags[bpf][0], binParFlags[bpf][1], binParFlags[bpf][2])
+    if len(binParFlags[bpf]) == 4:
+      print "%s autoMCStats %g %i %i %s" % (bpf,binParFlags[bpf][0], binParFlags[bpf][1], binParFlags[bpf][2], ";".join(",".join("%d"%_ for _ in binstomerge) for binstomerge in binParFlags[bpf][3]))
 
 nuisanceEdits = set(nuisanceEdits)
 for edit in nuisanceEdits:
