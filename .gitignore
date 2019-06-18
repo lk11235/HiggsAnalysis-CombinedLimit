@@ -1,1 +1,5 @@
 site
+/exe
+/lib
+/obj
+/python/python
