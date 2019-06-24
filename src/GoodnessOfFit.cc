@@ -7,7 +7,7 @@
 #include <RooPlot.h>
 #include <RooProdPdf.h>
 #include <RooSimultaneous.h>
-#include <RooAddPdf.h>
+#include <HiggsAnalysis/CombinedLimit/interface/HeshyAddPdf.h>
 #include <RooConstVar.h>
 #include <RooDataHist.h>
 #include <RooHistPdf.h>
@@ -408,8 +408,8 @@ RooAbsPdf * GoodnessOfFit::makeSaturatedPdf(RooAbsData &data) {
   if (verbose > 1) utils::printRDH(rdh);
   RooHistPdf *hpdf = new RooHistPdf(TString::Format("%s_shape", data.GetName()), "", *rdh->get(), *rdh);
   RooConstVar *norm = new RooConstVar(TString::Format("%s_norm", data.GetName()), "", data.sumEntries());
-  // we use RooAddPdf because this works with CachingNLL
-  RooAddPdf *ret = new RooAddPdf(TString::Format("%s_saturated", data.GetName()), "", RooArgList(*hpdf), RooArgList(*norm));
+  // we use HeshyAddPdf because this works with CachingNLL
+  HeshyAddPdf *ret = new HeshyAddPdf(TString::Format("%s_saturated", data.GetName()), "", RooArgList(*hpdf), RooArgList(*norm));
   ret->addOwnedComponents(RooArgSet(*norm));
   ret->addOwnedComponents(RooArgSet(*hpdf));
   return ret;

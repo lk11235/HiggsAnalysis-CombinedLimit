@@ -4,7 +4,7 @@
 #include "HiggsAnalysis/CombinedLimit/interface/RooMultiPdf.h"
 #include "HiggsAnalysis/CombinedLimit/interface/CachingNLL.h"
 #include <RooAbsData.h>
-#include <RooAddPdf.h>
+#include <HiggsAnalysis/CombinedLimit/interface/HeshyAddPdf.h>
 #include <RooProduct.h>
 #include <vector>
 
@@ -24,14 +24,14 @@ namespace cacheutils {
 
     class CachingAddPdf : public CachingPdfBase {
         public:
-            CachingAddPdf(const RooAddPdf &pdf, const RooArgSet &obs) ;
+            CachingAddPdf(const HeshyAddPdf &pdf, const RooArgSet &obs) ;
             ~CachingAddPdf() ;
             virtual const std::vector<Double_t> & eval(const RooAbsData &data) ;
             const RooAbsReal *pdf() const { return pdf_; }
             virtual void  setDataDirty() ;
             virtual void  setIncludeZeroWeights(bool includeZeroWeights) ;
         protected:
-            const RooAddPdf * pdf_;
+            const HeshyAddPdf * pdf_;
             std::vector<const RooAbsReal *> coeffs_;
             boost::ptr_vector<CachingPdfBase>  cachingPdfs_;
             std::vector<Double_t> work_;

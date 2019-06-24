@@ -8,7 +8,7 @@
 #include "RooDataSet.h"
 #include "RooFitResult.h"
 #include "RooSimultaneous.h"
-#include "RooAddPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/HeshyAddPdf.h"
 #include "RooProdPdf.h"
 #include "RooGaussian.h"
 #include "RooConstVar.h"

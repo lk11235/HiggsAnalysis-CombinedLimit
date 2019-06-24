@@ -20,7 +20,7 @@
 #include "RooAbsPdf.h"
 #include "RooFitResult.h"
 #include "RooRandom.h"
-#include "RooAddPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/HeshyAddPdf.h"
 #include "RooConstVar.h"
 #include "RooMsgService.h"
 #include <RooStats/ModelConfig.h>

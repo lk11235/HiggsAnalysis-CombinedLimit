@@ -35,8 +35,8 @@ const std::vector<Double_t> & cacheutils::CachingMultiPdf::eval(const RooAbsData
         if (chk[i] > 1e-6) normratio = max(normratio, abs(ret[i]/chk[i]-1));
     }  
     printf("%-70s: normalization match %+13.10f, selected pdf %s\n", pdf_->GetName(), normratio, pdf_->getCurrentPdf()->ClassName()); fflush(stdout);
-    if (normratio > 1e-5 && typeid(*pdf_->getCurrentPdf()) == typeid(RooAddPdf) ) {
-        RooAddPdf *add = (RooAddPdf*)pdf_->getCurrentPdf();
+    if (normratio > 1e-5 && typeid(*pdf_->getCurrentPdf()) == typeid(HeshyAddPdf) ) {
+        HeshyAddPdf *add = (HeshyAddPdf*)pdf_->getCurrentPdf();
         for (unsigned int i = 0, n = add->pdfList().getSize(); i < n; ++i) {
             printf("%-70s: RooAdd[%d] is a %s\n", pdf_->GetName(), i, add->pdfList().at(i)->ClassName());
         }
@@ -71,7 +71,7 @@ void cacheutils::CachingMultiPdf::setIncludeZeroWeights(bool includeZeroWeights)
 
 
 
-cacheutils::CachingAddPdf::CachingAddPdf(const RooAddPdf &pdf, const RooArgSet &obs) :
+cacheutils::CachingAddPdf::CachingAddPdf(const HeshyAddPdf &pdf, const RooArgSet &obs) :
     pdf_(&pdf)
 {
     const RooArgList & pdfs   = pdf.pdfList();

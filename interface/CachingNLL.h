@@ -4,7 +4,7 @@
 #include <memory>
 #include <map>
 #include <RooAbsPdf.h>
-#include <RooAddPdf.h>
+#include <HiggsAnalysis/CombinedLimit/interface/HeshyAddPdf.h>
 #include <RooRealSumPdf.h>
 #include <RooProdPdf.h>
 #include <RooAbsData.h>
@@ -135,7 +135,7 @@ class CachingAddNLL : public RooAbsReal {
         RooSetProxy & params() { return params_; }
     private:
         void setup_();
-        void addPdfs_(RooAddPdf *addpdf, bool recursive, const RooArgList & basecoeffs) ;
+        void addPdfs_(HeshyAddPdf *addpdf, bool recursive, const RooArgList & basecoeffs) ;
         RooAbsPdf *pdf_;
         RooSetProxy params_;
         const RooAbsData *data_;

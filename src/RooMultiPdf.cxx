@@ -12,7 +12,7 @@
 
 #include "HiggsAnalysis/CombinedLimit/interface/RooMultiPdf.h"
 #include "RooRealVar.h"
-#include "RooAddPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/HeshyAddPdf.h"
 #include <stdexcept>
 
 ClassImp(RooMultiPdf)
@@ -114,7 +114,7 @@ Double_t RooMultiPdf::getValV(const RooArgSet* nset) const {
 
 //_____________________________________________________________________________
 Double_t RooMultiPdf::evaluate() const{
-  // This is dangerous since if the underlying pdf is a RooAddPdf the meaning of the 
+  // This is dangerous since if the underlying pdf is a HeshyAddPdf the meaning of the 
   // coefficients depends on the normalization set, and we don't really know
   // how this information is propagated.
   // So, we just forward the getVal which is anyway the contract for RooMultiPdf.

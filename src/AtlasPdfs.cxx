@@ -1200,7 +1200,7 @@ Double_t RooParamKeysPdf::analyticalIntegral(Int_t code, const char* /*rangeName
 #include "RooRealVar.h"
 #include "RooFormulaVar.h"
 #include "RooCustomizer.h"
-#include "RooAddPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/HeshyAddPdf.h"
 #include "RooAddition.h"
 #if ROOT_VERSION_CODE>=ROOT_VERSION(5,34,19)
 #include "RooAbsMoment.h"
@@ -1558,7 +1558,7 @@ RooStarMomentMorph::CacheElem* RooStarMomentMorph::getCache(const RooArgSet* /*n
   
   std::string sumpdfName = Form("%s_sumpdf",GetName());
 
-  RooAbsPdf* theSumPdf = new RooAddPdf(sumpdfName.c_str(),sumpdfName.c_str(),transPdfList,coefList);
+  RooAbsPdf* theSumPdf = new HeshyAddPdf(sumpdfName.c_str(),sumpdfName.c_str(),transPdfList,coefList);
   theSumPdf->setAttribute("NeverConstant") ;
   theSumPdf->addOwnedComponents(ownedComps) ;
   

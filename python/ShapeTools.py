@@ -96,7 +96,7 @@ class ShapeBuilder(ModelBuilder):
                     bgpdfs.add(pdf); bgcoeffs.add(coeff)
                 else:
                     sigcoeffs.append(coeff)
-            if self.options.verbose > 1: print "Creating RooAddPdf %s with %s elements" % ("pdf_bin"+b, coeffs.getSize())
+            if self.options.verbose > 1: print "Creating HeshyAddPdf %s with %s elements" % ("pdf_bin"+b, coeffs.getSize())
             if channelBinParFlag: 
                 prop = self.addObj(ROOT.CMSHistErrorPropagator, "prop_bin%s" % b, "", pdfs.at(0).getXVar(), pdfs, coeffs)
                 prop.setAttribute('CachingPdf_Direct', True)
@@ -145,8 +145,8 @@ class ShapeBuilder(ModelBuilder):
                     self.objstore[prop_b.GetName()] = prop_b
                     sum_b = self.addObj(ROOT.RooRealSumPdf, "pdf_bin%s_bonly"       % b,  "", ROOT.RooArgList(prop_b),   ROOT.RooArgList(self.out.var('ONE')), True)
             else:
-                sum_s = self.addObj(ROOT.RooAddPdf,"pdf_bin%s"       % b,  "",  pdfs,   coeffs)
-                if not self.options.noBOnly: sum_b = self.addObj(ROOT.RooAddPdf, "pdf_bin%s_bonly" % b, "", bgpdfs, bgcoeffs)
+                sum_s = self.addObj(ROOT.HeshyAddPdf,"pdf_bin%s"       % b,  "",  pdfs,   coeffs)
+                if not self.options.noBOnly: sum_b = self.addObj(ROOT.HeshyAddPdf, "pdf_bin%s_bonly" % b, "", bgpdfs, bgcoeffs)
             sum_s.setAttribute("MAIN_MEASUREMENT") # useful for plain ROOFIT optimization on ATLAS side
             if b in self.pdfModes: 
                 sum_s.setAttribute('forceGen'+self.pdfModes[b].title())
@@ -163,7 +163,7 @@ class ShapeBuilder(ModelBuilder):
                 if not self.options.noBOnly:
                 	self.renameObj("pdf_bin%s_bonly" % b, "pdf_bin%s_bonly_nuis" % b)
                 # now we multiply by all the nuisances, but avoiding nested products
-                # so we first make a list of all nuisances plus the RooAddPdf
+                # so we first make a list of all nuisances plus the HeshyAddPdf
                 if len(self.DC.systs):
                     sumPlusNuis_s = ROOT.RooArgList(self.out.nuisPdfs)
                 else:
@@ -794,8 +794,8 @@ class ShapeBuilder(ModelBuilder):
             elif shape.InheritsFrom("RooAbsPdf"):
                 if shape.ClassName() == "RooExtendPdf": 
                     raise RuntimeError, "Error in channel %s, process %s: pdf %s is a RooExtendPdf, this is not supported" % (channel,process,shape.GetName())
-                elif shape.ClassName() == "RooAddPdf":
-                    self.checkRooAddPdf(channel,process,shape)
+                elif shape.ClassName() == "HeshyAddPdf":
+                    self.checkHeshyAddPdf(channel,process,shape)
                 _cache[shape.GetName()+"Pdf"] = shape
             elif shape.InheritsFrom("RooDataHist"):
                 rhp = ROOT.RooHistPdf("%sPdf" % shape.GetName(), "", shape.get(), shape) 
@@ -808,7 +808,7 @@ class ShapeBuilder(ModelBuilder):
             else:
                 raise RuntimeError, "shape2Pdf not implemented for %s" % shape.ClassName()
         return _cache[shape.GetName()+"Pdf"]
-    def checkRooAddPdf(self,channel,process,pdf):
+    def checkHeshyAddPdf(self,channel,process,pdf):
         coeflist = pdf.coefList()
         if (coeflist.getSize() == pdf.pdfList().getSize()-1):
             return True
@@ -816,7 +816,7 @@ class ShapeBuilder(ModelBuilder):
         for i in xrange(coeflist.getSize()):
             sum += coeflist.at(i).getVal()
         if abs(sum-1.0) > 1e-4:
-            raise RuntimeError, "Error in channel %s, process %s: RooAddPdf %s has coefficients that sum up to %g, and not to unity. This is not supported (but it could be supported on request).\n" % (channel,process,pdf.GetName(),sum)
+            raise RuntimeError, "Error in channel %s, process %s: HeshyAddPdf %s has coefficients that sum up to %g, and not to unity. This is not supported (but it could be supported on request).\n" % (channel,process,pdf.GetName(),sum)
     def argSetToString(self,argset):
         names = []
         it = argset.createIterator()

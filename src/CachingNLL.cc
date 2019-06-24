@@ -417,10 +417,10 @@ cacheutils::CachingAddNLL::clone(const char *name) const
     return new cacheutils::CachingAddNLL(*this, name);
 }
 
-void cacheutils::CachingAddNLL::addPdfs_(RooAddPdf *addpdf, bool recursive, const RooArgList & basecoeffs)
+void cacheutils::CachingAddNLL::addPdfs_(HeshyAddPdf *addpdf, bool recursive, const RooArgList & basecoeffs)
 {
     int npdf = addpdf->pdfList().getSize();
-    //std::cout << "Unpacking RooAddPdf " << addpdf->GetName() << " with " << npdf << " components:" << std::endl;
+    //std::cout << "Unpacking HeshyAddPdf " << addpdf->GetName() << " with " << npdf << " components:" << std::endl;
     RooAbsReal *lastcoeff = 0;
     if (npdf == addpdf->coefList().getSize()) {
         lastcoeff =  dynamic_cast<RooAbsReal*>(addpdf->coefList().at(npdf-1));
@@ -432,11 +432,11 @@ void cacheutils::CachingAddNLL::addPdfs_(RooAddPdf *addpdf, bool recursive, cons
     for (int i = 0; i < npdf; ++i) {
         RooAbsReal * coeff = (i < npdf-1 ? dynamic_cast<RooAbsReal*>(addpdf->coefList().at(i)) : lastcoeff);
         RooAbsPdf  * pdfi  = dynamic_cast<RooAbsPdf *>(addpdf->pdfList().at(i));
-        if (recursive && typeid(*pdfi) == typeid(RooAddPdf)) {
-            RooAddPdf *apdfi = static_cast<RooAddPdf*>(pdfi);
+        if (recursive && typeid(*pdfi) == typeid(HeshyAddPdf)) {
+            HeshyAddPdf *apdfi = static_cast<HeshyAddPdf*>(pdfi);
             RooArgList list(*coeff);
             if (basecoeffs.getSize()) list.add(basecoeffs);
-            //std::cout << "    Invoking recursive unpack on " << addpdf->GetName() << "[" << i << "]: RooAddPdf " << apdfi->GetName() << std::endl;
+            //std::cout << "    Invoking recursive unpack on " << addpdf->GetName() << "[" << i << "]: HeshyAddPdf " << apdfi->GetName() << std::endl;
             addPdfs_(apdfi, recursive, list);
             continue;
         } 
@@ -483,8 +483,8 @@ cacheutils::makeCachingPdf(RooAbsReal *pdf, const RooArgSet *obs) {
         return new CachingPowerPdf(pdf, obs);
     } else if (multiNll && typeid(*pdf) == typeid(RooMultiPdf)) {
         return new CachingMultiPdf(static_cast<RooMultiPdf&>(*pdf), *obs);
-    } else if (multiNll && typeid(*pdf) == typeid(RooAddPdf)) {
-        return new CachingAddPdf(static_cast<RooAddPdf&>(*pdf), *obs);
+    } else if (multiNll && typeid(*pdf) == typeid(HeshyAddPdf)) {
+        return new CachingAddPdf(static_cast<HeshyAddPdf&>(*pdf), *obs);
     } else if (prodNll && typeid(*pdf) == typeid(RooProduct)) {
         return new CachingProduct(static_cast<RooProduct&>(*pdf), *obs);
     } else if (hfNll && typeid(*pdf) == typeid(RooHistFunc)) {
@@ -515,9 +515,9 @@ cacheutils::CachingAddNLL::setup_()
     fastExit_ = !runtimedef::get("NO_ADDNLL_FASTEXIT");
     for (int i = 0, n = integrals_.size(); i < n; ++i) delete integrals_[i];
     integrals_.clear(); pdfs_.clear(); coeffs_.clear(); prods_.clear();
-    RooAddPdf *addpdf = 0;
+    HeshyAddPdf *addpdf = 0;
     RooRealSumPdf *sumpdf = 0;
-    if ((addpdf = dynamic_cast<RooAddPdf *>(pdf_)) != 0) {
+    if ((addpdf = dynamic_cast<HeshyAddPdf *>(pdf_)) != 0) {
         isRooRealSum_ = false; basicIntegrals_ = 0;
         addPdfs_(addpdf, runtimedef::get("ADDNLL_RECURSIVE"), RooArgList());
     } else if ((sumpdf = dynamic_cast<RooRealSumPdf *>(pdf_)) != 0) {
@@ -559,7 +559,7 @@ cacheutils::CachingAddNLL::setup_()
     } else {
         std::string errmsg = "ERROR: CachingAddNLL: Pdf ";
         errmsg += pdf_->GetName();
-        errmsg += " is neither a RooAddPdf nor a RooRealSumPdf, but a ";
+        errmsg += " is neither a HeshyAddPdf nor a RooRealSumPdf, but a ";
         errmsg += pdf_->ClassName();
         throw std::invalid_argument(errmsg);
     }

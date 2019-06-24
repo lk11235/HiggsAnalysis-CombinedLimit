@@ -9,7 +9,7 @@
 #include "RooFit.h"
 #include "RooSimultaneous.h"
 #include "RooCategory.h"
-#include "RooAddPdf.h"
+#include "HiggsAnalysis/CombinedLimit/interface/HeshyAddPdf.h"
 #include "RooRealSumPdf.h"
 #include "RooProdPdf.h"
 #include "RooConstVar.h"
@@ -565,7 +565,7 @@ void FitDiagnostics::getShapesAndNorms(RooAbsPdf *pdf, const RooArgSet &obs, std
         }
         return;
     }
-    RooAddPdf *add = dynamic_cast<RooAddPdf *>(pdf);
+    HeshyAddPdf *add = dynamic_cast<HeshyAddPdf *>(pdf);
     if (add != 0) {
         RooArgList clist(add->coefList());
         RooArgList plist(add->pdfList());

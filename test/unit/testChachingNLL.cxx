@@ -64,7 +64,7 @@ void testCachingPdf(RooAbsPdf *pdf, RooAbsData *data)
     
 }
 
-void testCachingAddNLL(RooAddPdf *pdf, RooAbsData *data) 
+void testCachingAddNLL(HeshyAddPdf *pdf, RooAbsData *data) 
 {
     RooAbsReal *nll = pdf->createNLL(*data);
     RooArgList params(*pdf->getParameters(*data));
@@ -172,7 +172,7 @@ void testCachingPdf(RooStats::ModelConfig &mc, RooAbsData *data, int tries=0) {
     for (int i = 0; i < allPdfs.getSize(); ++i) {
         RooAbsPdf *pdf = (RooAbsPdf *) allPdfs.at(i);
         if (pdf->dependsOn(*obs) && 
-            !pdf->InheritsFrom("RooSimultaneous") && !pdf->InheritsFrom("RooAddPdf") && !pdf->InheritsFrom("RooProdPdf")) {
+            !pdf->InheritsFrom("RooSimultaneous") && !pdf->InheritsFrom("HeshyAddPdf") && !pdf->InheritsFrom("RooProdPdf")) {
             std::cout << "Will use pdf " << pdf->GetName() << " (" << pdf->ClassName() << ")" << std::endl;
             testCachingPdf(pdf, data);
             if (tries-- == 0) break;
@@ -187,9 +187,9 @@ void testCachingAddNLL(RooStats::ModelConfig &mc, RooAbsData *data, int tries=0)
     const RooArgSet  *obs = data->get();
     for (int i = 0; i < allPdfs.getSize(); ++i) {
         RooAbsPdf *pdf = (RooAbsPdf *) allPdfs.at(i);
-        if (pdf->dependsOn(*obs) && pdf->InheritsFrom("RooAddPdf")) {
+        if (pdf->dependsOn(*obs) && pdf->InheritsFrom("HeshyAddPdf")) {
             std::cout << "Will use pdf " << pdf->GetName() << " (" << pdf->ClassName() << ")" << std::endl;
-            testCachingAddNLL((RooAddPdf*)pdf, data);
+            testCachingAddNLL((HeshyAddPdf*)pdf, data);
             if (tries-- == 0) break;
         } else {
             //std::cout << "Will NOT use pdf " << pdf->GetName() << " (" << pdf->ClassName() << ")" << std::endl;
