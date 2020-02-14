@@ -676,9 +676,12 @@ class HZZAnomalousCouplingsFromHistograms(HZZAnomalousCouplingsFromHistogramsBas
         i = 0
         for fai in self.sortedcouplings:
             if fai == "fa1": continue
+        
             ai = self.getcouplingname(fai)
             i += 1
 
+            print "fai :", fai, ai
+        
             if self.scalegL1by10000:
                 divideby = {
                     "g4": 1,
@@ -700,6 +703,8 @@ class HZZAnomalousCouplingsFromHistograms(HZZAnomalousCouplingsFromHistogramsBas
         if self.scaledifferentsqrtsseparately: raise ValueError("HZZAnomalousCouplingsFromHistograms is not compatible with scaledifferentsqrtsseparately")
 
         for g in couplings:
+
+            print g
             if self.separateggHttH:
                 self.modelBuilder.doVar('expr::ggHVV_{g}2("@0*@1*@2*@2", R, Rg, {g})'.format(g=g))
                 self.modelBuilder.doVar('expr::ttHVV_{g}2("@0*@1*@2*@2", R, Rt, {g})'.format(g=g))
@@ -880,32 +885,38 @@ class HZZAnomalousCouplingsFromHistogramsAi(HZZAnomalousCouplingsFromHistogramsB
         self.modelBuilder.doVar('expr::cosW("0.87681811112",)')
         self.modelBuilder.doVar('expr::sinW("0.48082221247",)')
         self.modelBuilder.doVar('expr::mZ("91.2",)')
-        self.modelBuilder.doVar('expr::Lambda1("1e4",)')
+        self.modelBuilder.doVar('expr::Lambda1("100.0",)')
 
         self.modelBuilder.doVar('expr::EFT_g1WW("@0",g1)')
         self.modelBuilder.doVar('expr::EFT_g2WW("@0*@0*@1",cosW,g2)')
         self.modelBuilder.doVar('expr::EFT_g4WW("@0*@0*@1",cosW,g4)')
         
-        self.modelBuilder.doVar('expr::EFT_L1WW("@2 / (@0*@0 - @1*@1) - 2*@1*@1*@3*@4*@4*1e-4 / (@0*@0 - @1*@1)",cosW,sinW,g1prime2,g2,Lambda1)')
+        self.modelBuilder.doVar('expr::EFT_L1WW("(@2 / (@0*@0 - @1*@1) - 2*@1*@1*@3*@4*@4 /(@5*@5*(@0*@0 - @1*@1)))",cosW,sinW,g1prime2,g2,Lambda1,mZ)')
         self.modelBuilder.doVar('expr::EFT_L1Zg_L1("2*@0*@1*@2/(@0*@0 - @1*@1)",cosW,sinW,g1prime2)')
-        self.modelBuilder.doVar('expr::EFT_L1Zg_g2("-2*@0*@1*@3*@4*@4*1e-4/((@2*@2)*(@0*@0 - @1*@1))",cosW,sinW,mZ,g2,Lambda1)')
+        self.modelBuilder.doVar('expr::EFT_L1Zg_g2("-2*@0*@1*@3*@4*@4/((@2*@2)*(@0*@0 - @1*@1))",cosW,sinW,mZ,g2,Lambda1)')
         self.modelBuilder.doVar('expr::EFT_L1Zg("@0 + @1",EFT_L1Zg_L1,EFT_L1Zg_g2)')
 
         
         
 
         #define expressions        
-        zz_expr      = '"@0*@0/4 + 0.1695*@3*@3 + 0.09076*@1*@1 + 0.03809*@2*@2 + 0.8095*@0*@3/2. + 0.5046*@0*@1/2. + 0.2092*@1*@3 + 0.1023*@4*@4 + 0.1901*@0*@4/2. + 0.07429*@3*@4 + 0.04710*@1*@4 ",g1,g2,g4,g1prime2,EFT_L1Zg' 
-        ww_expr      = '"@0*@0/4 + 0.1320*@3*@3 + 0.1944*@1*@1 + 0.08075*@2*@2 + 0.7204*@0*@3/2. + 0.7437*@0*@1/2 + 0.2774*@3*@1 ",EFT_g1WW,EFT_g2WW,EFT_g4WW,EFT_L1WW'
         
-        zgamma_expr  = '"1.1183*@0*@0/4. +0.0035*@1*@1 -  0.1250*@0*@1/2. + 0.000003*@1*@1 - 0.00018*@1*@1 + 0.0031*@0*@1/2 +0.00126*@2*@2 + 0.000005*@2*@2 -0.00047*@2*@2",EFT_g1WW,kappa,kappa_tilde'
-        gg_expr      = '"1.1068*@0*@0 + 0.0082*@0*@0 - 0.1150*@0*@0 + 2.5717*@1*@1 + 0.0091*@1*@1 - 0.1982*@1*@1",kappa,kappa_tilde'    
+
+         
+        zz_expr      = '"4*(@0*@0/4. + 0.1695*@3*@3 + 0.09076*@1*@1 + 0.03809*@2*@2 + 0.8095*@0*@3/2. + 0.5046*@0*@1/2. + 0.2092*@1*@3 + 0.1023*@4*@4 + 0.1901*@0*@4/2. + 0.07429*@3*@4 + 0.04710*@1*@4) ",g1,g2,g4,g1prime2,EFT_L1Zg' 
+        ww_expr      = '"4*(@0*@0/4. + 0.1320*@3*@3 + 0.1944*@1*@1 + 0.08075*@2*@2 + 0.7204*@0*@3/2. + 0.7437*@0*@1/2. + 0.2774*@3*@1) ",EFT_g1WW,EFT_g2WW,EFT_g4WW,EFT_L1WW'
+        
+        zgamma_expr  = '"4*(1.118600*@0*@0/4. +0.0035*@1*@1 -  0.125010*@0*@1/2. + 0.000003*@1*@1 - 0.00018*@1*@1 + 0.003100*@0*@1/2. +0.00126*@2*@2 + 0.000005*@2*@2 -0.00047*@2*@2)",EFT_g1WW,kappa,kappa_tilde'
+        gg_expr      = '"(1.1068*@0*@0 + 0.0082*@0*@0 - 0.1150*@0*@0 + 2.5717*@1*@1 + 0.0091*@1*@1 - 0.1982*@1*@1)",kappa,kappa_tilde'    
 
         bb_expr      = '"(@0*@0 + @1*@1)",kappa,kappa_tilde'
         cc_expr      = '"(@0*@0 + @1*@1)",kappa,kappa_tilde'
         tautau_expr  = '"(@0*@0 + @1*@1)",kappa,kappa_tilde'
         mumu_expr    = '"(@0*@0 + @1*@1)",kappa,kappa_tilde'
-        gmgm_expr    = '"1.6054*@0*@0/4. + 0.07312*@1*@1 - 0.6854*@0*@1/2. + 0.00002*@1*@1 - 0.0018*@1*@1 + 0.0085*@0*@1/2. + 0.1699*@2*@2 + 0.00002*@2*@2 - 0.0031*@2*@2",EFT_g1WW,kappa,kappa_tilde'
+        gmgm_expr    = '"4*(1.6054*@0*@0/4. + 0.07312*@1*@1 - 0.6854*@0*@1/2. + 0.00002*@1*@1 - 0.0018*@1*@1 + 0.0085*@0*@1/2. + 0.1699*@2*@2 + 0.00002*@2*@2 - 0.0031*@2*@2)",EFT_g1WW,kappa,kappa_tilde'
+        
+
+
         
         self.modelBuilder.doVar('expr::R_WW('+str(ww_expr)+')')
         self.modelBuilder.doVar('expr::R_ZZ('+str(zz_expr)+')')
@@ -946,7 +957,7 @@ class HZZAnomalousCouplingsFromHistogramsAi(HZZAnomalousCouplingsFromHistogramsB
 
             for kwargs["g1"], kwargs["g2"] in itertools.combinations(couplings, 2):
 
-                print kwargs
+                
 
                 if self.separateggHttH:
                     if self.useHffanomalous:
@@ -977,8 +988,6 @@ class HZZAnomalousCouplingsFromHistogramsAi(HZZAnomalousCouplingsFromHistogramsB
                 self.modelBuilder.doVar('expr::VVHVV_{g1}2{g2}1{g3}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, {g1}, {g2}, {g3})'.format(**kwargs))
 
             for kwargs["g1"], kwargs["g2"], kwargs["g3"], kwargs["g4"] in itertools.combinations(couplings, 4):
-                print "KWARGS :" , kwargs["g1"], kwargs["g2"], kwargs["g3"], kwargs["g4"]
-
                 self.modelBuilder.doVar('expr::VVHVV_{g1}1{g2}1{g3}1{g4}1_{signname}("{sign}@1*@2*@3*@4 / @0", gammaH, {g1}, {g2}, {g3}, {g4})'.format(**kwargs))
 
         return pois
