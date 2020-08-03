@@ -1177,6 +1177,7 @@ void cacheutils::CachingSimNLL::setChannelMasks(const RooArgList &args) {
 }
 
 void cacheutils::CachingSimNLL::setAnalyticBarlowBeeston(bool flag) {
+    static bool verb  = runtimedef::get("ADDNLL_VERBOSE_CACHING");
 	
     if (verb) {
       if (flag) {
