@@ -70,8 +70,8 @@ class SpinZeroHiggsFaiBase(SpinZeroHiggsBase):
     def processPhysicsOptions(self,physOptions):
         processed = super(SpinZeroHiggsFaiBase, self).processPhysicsOptions(physOptions)
 
-        if {self.faidefinitionorder(i) for i in xrange(self.numberoffais)} != set(xrange(self.numberoffais)):
-            raise ValueError("faidefinitionorder is not defined right, should go from 0 to {0} for inputs from 0 to {0}\n{1}\n{2}".format(self.numberoffais-1, {self.faidefinitionorder(i) for i in xrange(self.numberoffais)}, set(xrange(self.numberoffais))))
+        #if {self.faidefinitionorder(i) for i in xrange(self.numberoffais)} != set(xrange(self.numberoffais)):
+        #    raise ValueError("faidefinitionorder is not defined right, should go from 0 to {0} for inputs from 0 to {0}\n{1}\n{2}".format(self.numberoffais-1, {self.faidefinitionorder(i) for i in xrange(self.numberoffais)}, set(xrange(self.numberoffais))))
 
         for po in physOptions:
             newpo = po.lower().replace("a1", "ai0")
@@ -137,7 +137,7 @@ class SpinZeroHiggsFaiBase(SpinZeroHiggsBase):
     def getPOIList(self):
         poi = []
         poi += super(SpinZeroHiggsFaiBase, self).getPOIList()
-
+        '''
         for i in xrange(self.numberoffais):
             varname = self.parametername("f", i, False)
             if self.faidefinitionorder(i) == self.numberoffais-1:
@@ -159,7 +159,7 @@ class SpinZeroHiggsFaiBase(SpinZeroHiggsBase):
                     self.modelBuilder.doVar(varname+"[0,0,1]") #will set the range later
 
                 self.modelBuilder.out.var(varname).setVal(1 if i==0 else 0) #set fa1 to 1, anomalous couplings to 0
-
+  
         parametertype = "f"
         done = {i: False for i in xrange(self.numberoffais)}
         while not all(done.values()):
@@ -270,6 +270,7 @@ class SpinZeroHiggsFaiBase(SpinZeroHiggsBase):
                 print "Found GGsm, fixing to 1"
                 self.modelBuilder.out.var("GGsm").setVal(1)
                 self.modelBuilder.out.var("GGsm").setConstant()
+      '''
 
         return poi
 
@@ -491,6 +492,10 @@ class HZZAnomalousCouplingsFromHistogramsBase(SpinZeroHiggsBase):
                 if po in self.anomalouscouplings: raise ValueError("Provided physOption "+po+" twice")
                 self.anomalouscouplings.append(po)
                 processed.append(po)
+            if po in ("war1", "war2", "war3", "war4"):
+                if po in self.anomalouscouplings: raise ValueError("Provided physOption "+po+" twice")
+                self.anomalouscouplings.append(po)
+                processed.append(po)
 
             if po.lower() == "separategghtth":
                 self.separateggHttH = True
@@ -501,10 +506,15 @@ class HZZAnomalousCouplingsFromHistogramsBase(SpinZeroHiggsBase):
 
         for po in physOptions[:]:
             for i, fai in enumerate(self.anomalouscouplings):
+                 
+                    
                 if fai == "fa1": continue #handled in the base class
                 ai = fai[1:]
+                
                 if re.search("{}(fixed|notpoi|floating|aspoi)".format(ai).lower(), po.lower()):
-                    physOptions.append(po.replace(ai, "ai{}".format(self.faidefinitionorderinverse(i))))
+                    
+                    if "war" not in po:  
+                        physOptions.append(po.replace(ai, "ai{}".format(self.faidefinitionorderinverse(i))))
                     processed.append(po)
 
         processed += super(HZZAnomalousCouplingsFromHistogramsBase, self).processPhysicsOptions(physOptions)
@@ -520,10 +530,13 @@ class HZZAnomalousCouplingsFromHistogramsBase(SpinZeroHiggsBase):
     def sortedcouplings(self):
         return sorted(self.anomalouscouplings, key=["fa1", "fa3", "fa2", "fL1", "fL1Zg"].index)
 
+    def sortedwarsawcouplings(self):
+        return sorted(self.anomalouscouplings, key=["war1","war2","war3","war4"].index)
+
     def faidefinitionorder(self, i):
         #CMS_zz4l_fai1, CMS_zz4l_fai2, etc. correspond to fa3, fa2, fL1, fL1Zg in that order
         #However they might not be defined in that order, e.g. CMS_zz4l_fai1 might be restricted to (0, 1-CMS_zz4l_fai2)
-        return self.anomalouscouplings.index(self.sortedcouplings[i])
+        return self.anomalouscouplings.index(self.sortedwarsawcouplings[i])
 
     signalprocessregex = (
         "(?P<production>gg|tt|bb|qq|Z|W|V)H_"
@@ -550,6 +563,18 @@ class HZZAnomalousCouplingsFromHistogramsBase(SpinZeroHiggsBase):
             "fa3": "g4",
             "fL1": "g1prime2",
             "fL1Zg": "ghzgs1prime2",
+        }[processorfai]
+    def getcouplingwarsawname(processorfai, production=None):
+        if processorfai == "0PMff": return {"gg": "ghg2", "tt": "kappa", "bb": "kappa"}[production]
+        if processorfai == "0Mff": return {"gg": "ghg4", "tt": "kappatilde", "bb": "kappatilde"}[production]
+
+        return {
+            
+            "war1": "war1",
+            "war2": "war2",
+            "war3": "war3",
+            "war4": "war4",
+            
         }[processorfai]
 
     def tellAboutProcess(self, bin, process):
@@ -589,6 +614,11 @@ class HZZAnomalousCouplingsFromHistogramsBase(SpinZeroHiggsBase):
 
             powerdict = collections.OrderedDict(
                 sorted(powerdict.iteritems(), key = lambda x: "g1 g4 g2 g1prime2 ghzgs1prime2".index(x[0]))
+            )
+
+            #wt is this??
+            powerdict = collections.OrderedDict(
+                sorted(powerdict.iteritems(), key = lambda x: "w1 w2 w3 w4".index(x[0]))
             )
 
             sign = match.group("HVVintsign")
@@ -929,6 +959,7 @@ class HZZAnomalousCouplingsFromHistogramsAi(HZZAnomalousCouplingsFromHistogramsB
         self.modelBuilder.doVar('expr:R_gammagamma('+str(gmgm_expr)+')')
 
         if self.fixgamma :
+            print "Will fix gammaH to SM value"
             self.modelBuilder.doVar('expr::gammaH("1",)')
         else :     
             self.modelBuilder.doVar('expr::gammaH("(0.5824*@0 + 0.2137*@1 + 0.08187*@2 + 0.06272*@3 + 0.02891*@4 + 0.02619*@5 + 0.002270*@6 +  0.001533*@7 + 0.0002176*@8 )/0.9998",R_bb,R_WW,R_gg,R_tautau,R_cc,R_ZZ,R_gammagamma,R_Zgamma,R_mumu)')
@@ -992,10 +1023,312 @@ class HZZAnomalousCouplingsFromHistogramsAi(HZZAnomalousCouplingsFromHistogramsB
 
         return pois
 
+class SpinZeroHiggsAiBaseWarsaw(SpinZeroHiggsBase):
+    def __init__(self):
+        super(SpinZeroHiggsAiBaseWarsaw, self).__init__()
+        
+
+        self.aistatus = collections.defaultdict(lambda: "fix")
+        print self.aistatus
+        self.floatgamma = True
+
+    def processPhysicsOptions(self,physOptions):
+        processed = super(SpinZeroHiggsAiBaseWarsaw, self).processPhysicsOptions(physOptions)
+        for po in physOptions:
+            newpo = po.lower().replace("a1", "ai0")
+            match = re.match("war([0-9]+)(fixed|notpoi|floating|aspoi)$", newpo)
+            print match
+            if match:
+                i = int(match.group(1))
+                whattodo = match.group(2)
+
+                #if not 0 <= i < self.numberoffais:
+                #    raise ValueError("There are only {} fais available, so can't do anything with {}".format(self.numberoffais-1, po))
+
+                if i in self.aistatus:
+                    raise ValueError("Specified multiple physics options for war{}".format(i).replace("ai0", "a1"))
+
+                if whattodo == "fixed":
+                    self.aistatus[i] = "fix"
+                    print "Will fix war{} to 0".format(i)
+                elif whattodo == "floating" or whattodo == "notpoi":
+                    self.aistatus[i] = "float"
+                    print "Will float war{}".format(i)
+                elif whattodo == "aspoi":
+                    self.aistatus[i] = "POI"
+                    print "Will consider war{} as a parameter of interest".format(i)
+                else:
+                    assert False, whattodo
+
+                processed.append(po)
+
+            if po.lower() == "fixgamma":
+                self.fixgamma = True
+                processed.append(po)
+                
+
+        if 1 not in self.aistatus: self.aistatus[1] = "POI"
+
+        return processed
+
+    def getPOIList(self):
+        poi = []
+        poi += super(SpinZeroHiggsAiBaseWarsaw, self).getPOIList()
+
+        if 1 not in self.aistatus: self.aistatus[1] = "POI"
+
+        for i in xrange(self.numberoffais):
+            varname = self.getcouplingwarsawname(sortedwarsawcouplings[i])
+            couplings.append(ai)
+
+            if not self.modelBuilder.out.var(varname):
+                self.modelBuilder.doVar(varname+"[0,0,1]") #will set the range later
+
+            self.modelBuilder.out.var(varname).setVal(1 if varname == "g1" else 0) #set a1 to 1, anomalous couplings to 0
+
+        for i in xrange(self.numberoffais):
+            varname = self.getcouplingwarsawname(sortedwarsawcouplings[i])
+            status = self.aistatus[i]
+            if status in ("float", "POI"):
+                self.modelBuilder.out.var(varname).removeMax()
+                if self.allowPMF[i]: self.modelBuilder.out.var(varname).removeMin()
+                self.modelBuilder.out.var(varname).setConstant(False)
+                if status == "POI":
+                    print "Treating "+varname+" as a POI"
+                    poi.append(varname)
+                else:
+                    print "Floating "+varname
+                    self.modelBuilder.out.var(varname).setAttribute("flatParam")
+                if self.allowPMF[i]: print "Allowing negative "+varname
+            elif status == "fix":
+                print "Fixing "+varname
+                self.modelBuilder.out.var(varname).setConstant()
+            else:
+                assert False, status
+
+        return poi
+
+
+
+class HZZAnomalousCouplingsFromHistogramsWarsaw(HZZAnomalousCouplingsFromHistogramsBase, SpinZeroHiggsAiBaseWarsaw, MultiSignalSpinZeroHiggs):
+
+    
+
+    def setPhysicsOptions(self, physOptions):
+        if not any(po.startswith("sqrts=") for po in physOptions):
+            physOptions = physOptions + ["sqrts=13"]
+        for po in physOptions:
+            if po.startswith("turnoff="):
+                self.turnoff += po.replace("turnoff=", "").split(",")
+                #po gets removed in super
+        super(MultiSignalSpinZeroHiggs, self).setPhysicsOptions(physOptions)
+        if self.sqrts != [13]:
+            raise ValueError("HZZAnomalousCouplingsFromHistograms is set up for 13 TeV only")
+        if self.scaledifferentsqrtsseparately:
+            raise ValueError("HZZAnomalousCouplingsFromHistograms is not set up for scaledifferentsqrtsseparately")
+        if not self.scalemuvfseparately:
+            raise ValueError("HZZAnomalousCouplingsFromHistograms is not set up for scalemuvmuftogether")
+
+
+
+    def getPOIList(self):
+        self.modelBuilder.doVar("ghg2[1.0,0,10]")
+        self.modelBuilder.out.var("ghg2").removeRange()
+        self.modelBuilder.out.var("ghg2").setAttribute("flatParam")
+        if self.separateggHttH:
+            self.modelBuilder.doVar("kappa[1.0,0,10]")
+            self.modelBuilder.out.var("kappa").removeRange()
+            self.modelBuilder.out.var("kappa").setAttribute("flatParam")
+        else:
+            self.modelBuilder.doVar('expr::kappa("@0", ghg2)')
+
+        if self.useHffanomalous:
+            self.modelBuilder.doVar("ghg4[0.0,0,10]")
+            self.modelBuilder.out.var("ghg4").removeRange()
+            self.modelBuilder.out.var("ghg4").setAttribute("flatParam")
+
+            if self.separateggHttH:
+                self.modelBuilder.doVar("kappa_tilde[1.0,0,10]")
+                self.modelBuilder.out.var("kappa_tilde").removeRange()
+                self.modelBuilder.out.var("kappa_tilde").setAttribute("flatParam")
+            else:
+                self.modelBuilder.doVar('expr::kappa_tilde("0.6482*@0", ghg4)') # 0.6482 comes from sqrt( sigma_(kf =1 )/ sigma_(kftilde =1))
+
+        self.modelBuilder.doVar("RV[1.0,0,10]")
+        self.modelBuilder.doVar("R[1.0,0,10]")
+        self.modelBuilder.doVar("RF[1.0,0,10]")
+        
+
+
+
+
+        pois = super(HZZAnomalousCouplingsFromHistogramsWarsaw, self).getPOIList()
+
+        if not self.modelBuilder.out.var("g1"):
+            self.modelBuilder.doVar('expr::g1("sqrt(@0)", CMS_zz4l_fa1)')
+
+        #define EFT constants 
+        self.modelBuilder.doVar('expr::cosW("0.87681811112",)')
+        self.modelBuilder.doVar('expr::sinW("0.48082221247",)')
+        self.modelBuilder.doVar('expr::mZ("91.2",)')
+        self.modelBuilder.doVar('expr::Lambda1("100.0",)')
+
+
+
+        #relate input POis and g's 
+        couplings = ["g1"]
+        i = 0
+
+        
+        #self.modelBuilder.doVar("expr::g4")
+
+        self.modelBuilder.doVar('expr::g2("(@0>0 ? 1 : -1) * sqrt(abs(@0))",war1')
+        self.modelBuilder.doVar('expr::g4"("(@0>0 ? 1 : -1) * sqrt(abs(@0*@1))",war1,war3')
+        self.modelBuilder.doVar('expr::g1prime2("(@0>0 ? 1 : -1) * sqrt(abs(@0))",war2')
+        
+        couplings.append(ai)
+
+
+        '''
+        for fai in self.sortedcouplings:
+            if fai == "fa1": continue
+        
+            ai = self.getcouplingname(fai)
+            i += 1
+
+            print "fai :", fai, ai
+        
+            
+            kwargs = {
+              "i": i,
+              "ai": ai,
+              
+            }
+            self.modelBuilder.doVar('expr::{ai}("(@0>0 ? 1 : -1) * sqrt(abs(@0))", CMS_zz4l_fai{i})'.format(**kwargs))
+            couplings.append(ai)
+        '''
+        if self.scaledifferentsqrtsseparately: raise ValueError("HZZAnomalousCouplingsFromHistograms is not compatible with scaledifferentsqrtsseparately")
+
+
+
+
+        self.modelBuilder.doVar('expr::EFT_g1WW("@0",g1)')
+        self.modelBuilder.doVar('expr::EFT_g2WW("@0*@0*@1",cosW,g2)')
+        self.modelBuilder.doVar('expr::EFT_g4WW("@0*@0*@1",cosW,g4)')
+        
+        self.modelBuilder.doVar('expr::EFT_L1WW("(@2 / (@0*@0 - @1*@1) - 2*@1*@1*@3*@4*@4 /(@5*@5*(@0*@0 - @1*@1)))",cosW,sinW,g1prime2,g2,Lambda1,mZ)')
+        self.modelBuilder.doVar('expr::EFT_L1Zg_L1("2*@0*@1*@2/(@0*@0 - @1*@1)",cosW,sinW,g1prime2)')
+        self.modelBuilder.doVar('expr::EFT_L1Zg_g2("-2*@0*@1*@3*@4*@4/((@2*@2)*(@0*@0 - @1*@1))",cosW,sinW,mZ,g2,Lambda1)')
+        self.modelBuilder.doVar('expr::EFT_L1Zg("@0 + @1",EFT_L1Zg_L1,EFT_L1Zg_g2)')
+
+        
+        
+
+        #define expressions        
+        
+
+         
+        zz_expr      = '"4*(@0*@0/4. + 0.1695*@3*@3 + 0.09076*@1*@1 + 0.03809*@2*@2 + 0.8095*@0*@3/2. + 0.5046*@0*@1/2. + 0.2092*@1*@3 + 0.1023*@4*@4 + 0.1901*@0*@4/2. + 0.07429*@3*@4 + 0.04710*@1*@4) ",g1,g2,g4,g1prime2,EFT_L1Zg' 
+        ww_expr      = '"4*(@0*@0/4. + 0.1320*@3*@3 + 0.1944*@1*@1 + 0.08075*@2*@2 + 0.7204*@0*@3/2. + 0.7437*@0*@1/2. + 0.2774*@3*@1) ",EFT_g1WW,EFT_g2WW,EFT_g4WW,EFT_L1WW'
+        
+        zgamma_expr  = '"4*(1.118600*@0*@0/4. +0.0035*@1*@1 -  0.125010*@0*@1/2. + 0.000003*@1*@1 - 0.00018*@1*@1 + 0.003100*@0*@1/2. +0.00126*@2*@2 + 0.000005*@2*@2 -0.00047*@2*@2)",EFT_g1WW,kappa,kappa_tilde'
+        gg_expr      = '"(1.1068*@0*@0 + 0.0082*@0*@0 - 0.1150*@0*@0 + 2.5717*@1*@1 + 0.0091*@1*@1 - 0.1982*@1*@1)",kappa,kappa_tilde'    
+
+        bb_expr      = '"(@0*@0 + @1*@1)",kappa,kappa_tilde'
+        cc_expr      = '"(@0*@0 + @1*@1)",kappa,kappa_tilde'
+        tautau_expr  = '"(@0*@0 + @1*@1)",kappa,kappa_tilde'
+        mumu_expr    = '"(@0*@0 + @1*@1)",kappa,kappa_tilde'
+        gmgm_expr    = '"4*(1.6054*@0*@0/4. + 0.07312*@1*@1 - 0.6854*@0*@1/2. + 0.00002*@1*@1 - 0.0018*@1*@1 + 0.0085*@0*@1/2. + 0.1699*@2*@2 + 0.00002*@2*@2 - 0.0031*@2*@2)",EFT_g1WW,kappa,kappa_tilde'
+        
+
+
+        
+        self.modelBuilder.doVar('expr::R_WW('+str(ww_expr)+')')
+        self.modelBuilder.doVar('expr::R_ZZ('+str(zz_expr)+')')
+        self.modelBuilder.doVar('expr::R_Zgamma('+str(zgamma_expr)+')')
+        self.modelBuilder.doVar('expr::R_gg('+str(gg_expr)+')')
+        self.modelBuilder.doVar('expr::R_bb('+str(bb_expr)+')')
+        self.modelBuilder.doVar('expr::R_cc('+str(cc_expr)+')')
+        self.modelBuilder.doVar('expr::R_tautau('+str(tautau_expr)+')')
+        self.modelBuilder.doVar('expr::R_mumu('+str(mumu_expr)+')')
+        self.modelBuilder.doVar('expr:R_gammagamma('+str(gmgm_expr)+')')
+
+        if self.fixgamma :
+            print "Will fix gammaH to SM value"
+            self.modelBuilder.doVar('expr::gammaH("1",)')
+
+        else :     
+            self.modelBuilder.doVar('expr::gammaH("(0.5824*@0 + 0.2137*@1 + 0.08187*@2 + 0.06272*@3 + 0.02891*@4 + 0.02619*@5 + 0.002270*@6 +  0.001533*@7 + 0.0002176*@8 )/0.9998",R_bb,R_WW,R_gg,R_tautau,R_cc,R_ZZ,R_gammagamma,R_Zgamma,R_mumu)')
+
+
+        
+        self.modelBuilder.doVar('expr::alpha(0.39,)')
+        
+        
+        for g in couplings:
+            if self.useHffanomalous:
+                self.modelBuilder.doVar('expr::ggHVV_{g}2("(@1*@1+@2*@2) * @3*@3 / @0", gammaH, ghg2, ghg4, {g})'.format(g=g))
+                self.modelBuilder.doVar('expr::ttHVV_{g}2("(@1*@1+@4*@2*@2) * @3*@3 / @0", gammaH, kappa, kappa_tilde, {g}, alpha)'.format(g=g))
+                self.modelBuilder.doVar('expr::ggHVV_ghg22_{g}2("@1*@1*@2*@2 / @0", gammaH, ghg2, {g})'.format(g=g))
+                self.modelBuilder.doVar('expr::ggHVV_ghg42_{g}2("@1*@1*@2*@2 / @0", gammaH, ghg4, {g})'.format(g=g))
+                self.modelBuilder.doVar('expr::ttHVV_kappa2_{g}2("@1*@1*@2*@2 / @0", gammaH, kappa, {g})'.format(g=g))
+                self.modelBuilder.doVar('expr::ttHVV_kappatilde2_{g}2("@1*@1*@2*@2 / @0", gammaH, kappa_tilde, {g})'.format(g=g))
+            else:
+                self.modelBuilder.doVar('expr::ggHVV_{g}2("@1*@1*@2*@2 / @0", gammaH, ghg2, {g})'.format(g=g))
+                self.modelBuilder.doVar('expr::ttHVV_{g}2("@1*@1*@2*@2 / @0", gammaH, kappa, {g})'.format(g=g))
+            self.modelBuilder.doVar('expr::VVHVV_{g}4("@1*@1*@1*@1 / @0", gammaH, {g})'.format(g=g))
+
+        kwargs = {}
+        for kwargs["signname"], kwargs["sign"] in ("positive", ""), ("negative", "-"):
+
+
+            for kwargs["g1"], kwargs["g2"] in itertools.combinations(couplings, 2):
+
+                
+
+                if self.separateggHttH:
+                    if self.useHffanomalous:
+                        self.modelBuilder.doVar('expr::ggHVV_{g1}1{g2}1_{signname}("{sign}(@1*@1+@2*@2) * @3*@4 / @0", gammaH, ghg2, ghg4, {g1}, {g2})'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ttHVV_{g1}1{g2}1_{signname}("{sign}(@1*@1+@5*@2*@2) * @3*@4 / @0", gammaH, kappa, kappa_tilde, {g1}, {g2}, alpha)'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ggHVV_ghg22_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, ghg2, {g1}, {g2})'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ggHVV_ghg42_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, ghg4, {g1}, {g2})'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ttHVV_kappa2_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, kappa, {g1}, {g2})'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ttHVV_kappatilde2_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, kappa_tilde, {g1}, {g2})'.format(**kwargs))
+                    else:
+                        self.modelBuilder.doVar('expr::ggHVV_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, ghg2, {g1}, {g2})'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ttHVV_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, kappa, {g1}, {g2})'.format(**kwargs))
+                else:
+                    self.modelBuilder.doVar('expr::ggHVV_{g1}1{g2}1_{signname}("{sign}@1*@2 / @0", gammaH, {g1}, {g2})'.format(**kwargs))
+                    self.modelBuilder.doVar('expr::ttHVV_{g1}1{g2}1_{signname}("{sign}@1*@2 / @0", gammaH, {g1}, {g2})'.format(**kwargs))
+                    if self.useHffanomalous:
+                        self.modelBuilder.doVar('expr::ggHVV_ghg22_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, ghg2, {g1}, {g2})'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ggHVV_ghg42_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, ghg4, {g1}, {g2})'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ttHVV_kappa2_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, kappa, {g1}, {g2})'.format(**kwargs))
+                        self.modelBuilder.doVar('expr::ttHVV_kappatilde2_{g1}1{g2}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, kappa_tilde, {g1}, {g2})'.format(**kwargs))
+                self.modelBuilder.doVar('expr::VVHVV_{g1}1{g2}3_{signname}("{sign}@1*@2*@2*@2 / @0", gammaH, {g1}, {g2})'.format(**kwargs))
+                self.modelBuilder.doVar('expr::VVHVV_{g1}2{g2}2_{signname}("{sign}@1*@1*@2*@2 / @0", gammaH, {g1}, {g2})'.format(**kwargs))
+                self.modelBuilder.doVar('expr::VVHVV_{g1}3{g2}1_{signname}("{sign}@1*@1*@1*@2 / @0", gammaH, {g1}, {g2})'.format(**kwargs))
+
+            for kwargs["g1"], kwargs["g2"], kwargs["g3"] in itertools.combinations(couplings, 3):
+                self.modelBuilder.doVar('expr::VVHVV_{g1}1{g2}1{g3}2_{signname}("{sign}@1*@2*@3*@3 / @0", gammaH, {g1}, {g2}, {g3})'.format(**kwargs))
+                self.modelBuilder.doVar('expr::VVHVV_{g1}1{g2}2{g3}1_{signname}("{sign}@1*@2*@2*@3 / @0", gammaH, {g1}, {g2}, {g3})'.format(**kwargs))
+                self.modelBuilder.doVar('expr::VVHVV_{g1}2{g2}1{g3}1_{signname}("{sign}@1*@1*@2*@3 / @0", gammaH, {g1}, {g2}, {g3})'.format(**kwargs))
+
+            for kwargs["g1"], kwargs["g2"], kwargs["g3"], kwargs["g4"] in itertools.combinations(couplings, 4):
+                self.modelBuilder.doVar('expr::VVHVV_{g1}1{g2}1{g3}1{g4}1_{signname}("{sign}@1*@2*@3*@4 / @0", gammaH, {g1}, {g2}, {g3}, {g4})'.format(**kwargs))
+
+        return pois
+
+
+
+
+
+
 spinZeroHiggs = SpinZeroHiggs()
 multiSignalSpinZeroHiggs = MultiSignalSpinZeroHiggs()
-hzzAnomalousCouplingsFromHistograms = HZZAnomalousCouplingsFromHistograms()
-hzzAnomalousCouplingsFromHistogramsAi = HZZAnomalousCouplingsFromHistogramsAi()
+#hzzAnomalousCouplingsFromHistograms = HZZAnomalousCouplingsFromHistograms()
+#hzzAnomalousCouplingsFromHistogramsAi = HZZAnomalousCouplingsFromHistogramsAi()
+hzzAnomalousCouplingsFromHistogramsWarsaw = HZZAnomalousCouplingsFromHistogramsWarsaw()
 
 
                 
