@@ -270,8 +270,8 @@ class SpinZeroHiggsFaiBase(SpinZeroHiggsBase):
                 print "Found GGsm, fixing to 1"
                 self.modelBuilder.out.var("GGsm").setVal(1)
                 self.modelBuilder.out.var("GGsm").setConstant()
-      '''
-
+      
+        '''
         return poi
 
 class SpinZeroHiggs(SpinZeroHiggsFaiBase):
@@ -530,13 +530,11 @@ class HZZAnomalousCouplingsFromHistogramsBase(SpinZeroHiggsBase):
     def sortedcouplings(self):
         return sorted(self.anomalouscouplings, key=["fa1", "fa3", "fa2", "fL1", "fL1Zg"].index)
 
-    def sortedwarsawcouplings(self):
-        return sorted(self.anomalouscouplings, key=["war1","war2","war3","war4"].index)
-
+    
     def faidefinitionorder(self, i):
         #CMS_zz4l_fai1, CMS_zz4l_fai2, etc. correspond to fa3, fa2, fL1, fL1Zg in that order
         #However they might not be defined in that order, e.g. CMS_zz4l_fai1 might be restricted to (0, 1-CMS_zz4l_fai2)
-        return self.anomalouscouplings.index(self.sortedwarsawcouplings[i])
+        return self.anomalouscouplings.index(self.sortedcouplings[i])
 
     signalprocessregex = (
         "(?P<production>gg|tt|bb|qq|Z|W|V)H_"
@@ -616,10 +614,7 @@ class HZZAnomalousCouplingsFromHistogramsBase(SpinZeroHiggsBase):
                 sorted(powerdict.iteritems(), key = lambda x: "g1 g4 g2 g1prime2 ghzgs1prime2".index(x[0]))
             )
 
-            #wt is this??
-            powerdict = collections.OrderedDict(
-                sorted(powerdict.iteritems(), key = lambda x: "w1 w2 w3 w4".index(x[0]))
-            )
+            
 
             sign = match.group("HVVintsign")
             result += "_" + "".join("{}{}".format(k, v) for k, v in powerdict.iteritems()) + "_" + sign
@@ -634,6 +629,7 @@ class HZZAnomalousCouplingsFromHistogramsBase(SpinZeroHiggsBase):
 class HZZAnomalousCouplingsFromHistograms(HZZAnomalousCouplingsFromHistogramsBase, MultiSignalSpinZeroHiggs):
 
     '''
+    #NON EFT xsections factors scaled 
     aidecay = {
       "g2": 1.65684,
       "g4": 2.55052,
@@ -1028,34 +1024,40 @@ class SpinZeroHiggsAiBaseWarsaw(SpinZeroHiggsBase):
         super(SpinZeroHiggsAiBaseWarsaw, self).__init__()
         
 
-        self.aistatus = collections.defaultdict(lambda: "fix")
-        print self.aistatus
+        self.aistatus = ["fix"]*8
         self.floatgamma = True
 
     def processPhysicsOptions(self,physOptions):
         processed = super(SpinZeroHiggsAiBaseWarsaw, self).processPhysicsOptions(physOptions)
         for po in physOptions:
-            newpo = po.lower().replace("a1", "ai0")
+            print "po",po
+            newpo = po.lower()
             match = re.match("war([0-9]+)(fixed|notpoi|floating|aspoi)$", newpo)
-            print match
-            if match:
+            
+            
+            if match and "war" in po:
                 i = int(match.group(1))
+                varname = "war"+str(i)
+                #self.modelBuilder.doVar(varname) #+"[0,-10,10]") #will set the range later
+                
                 whattodo = match.group(2)
-
+                
                 #if not 0 <= i < self.numberoffais:
                 #    raise ValueError("There are only {} fais available, so can't do anything with {}".format(self.numberoffais-1, po))
 
-                if i in self.aistatus:
-                    raise ValueError("Specified multiple physics options for war{}".format(i).replace("ai0", "a1"))
+                #if i in self.aistatus:
+                #    raise ValueError("Specified multiple physics options for war{}".format(i).replace("ai0", "a1"))
 
                 if whattodo == "fixed":
                     self.aistatus[i] = "fix"
+                    self.modelBuilder.out.var(varname).setConstant()
+
                     print "Will fix war{} to 0".format(i)
                 elif whattodo == "floating" or whattodo == "notpoi":
                     self.aistatus[i] = "float"
                     print "Will float war{}".format(i)
                 elif whattodo == "aspoi":
-                    self.aistatus[i] = "POI"
+                    self.aistatus[i] = ("POI")
                     print "Will consider war{} as a parameter of interest".format(i)
                 else:
                     assert False, whattodo
@@ -1067,45 +1069,37 @@ class SpinZeroHiggsAiBaseWarsaw(SpinZeroHiggsBase):
                 processed.append(po)
                 
 
-        if 1 not in self.aistatus: self.aistatus[1] = "POI"
-
+        #if 1 not in self.aistatus: self.aistatus[1] = "POI"
+        
+        
+        
         return processed
 
     def getPOIList(self):
         poi = []
         poi += super(SpinZeroHiggsAiBaseWarsaw, self).getPOIList()
 
-        if 1 not in self.aistatus: self.aistatus[1] = "POI"
-
-        for i in xrange(self.numberoffais):
-            varname = self.getcouplingwarsawname(sortedwarsawcouplings[i])
-            couplings.append(ai)
-
-            if not self.modelBuilder.out.var(varname):
-                self.modelBuilder.doVar(varname+"[0,0,1]") #will set the range later
-
-            self.modelBuilder.out.var(varname).setVal(1 if varname == "g1" else 0) #set a1 to 1, anomalous couplings to 0
-
-        for i in xrange(self.numberoffais):
-            varname = self.getcouplingwarsawname(sortedwarsawcouplings[i])
-            status = self.aistatus[i]
-            if status in ("float", "POI"):
-                self.modelBuilder.out.var(varname).removeMax()
-                if self.allowPMF[i]: self.modelBuilder.out.var(varname).removeMin()
-                self.modelBuilder.out.var(varname).setConstant(False)
+        for i in range (1,8): 
+            varname = "war"+str(i)
+            
+            if len(self.aistatus) >= i -1: 
+                status = self.aistatus[i]
+                if status in ("float", "POI"):
+                    self.modelBuilder.out.var(varname).removeMax()
+                    if self.allowPMF[i]: self.modelBuilder.out.var(varname).removeMin()
+                    self.modelBuilder.out.var(varname).setConstant(False)
                 if status == "POI":
                     print "Treating "+varname+" as a POI"
                     poi.append(varname)
+                elif status == "fix":
+                 print "Fixing "+varname
+                 self.modelBuilder.out.var(varname).setConstant()
+                
                 else:
                     print "Floating "+varname
                     self.modelBuilder.out.var(varname).setAttribute("flatParam")
                 if self.allowPMF[i]: print "Allowing negative "+varname
-            elif status == "fix":
-                print "Fixing "+varname
-                self.modelBuilder.out.var(varname).setConstant()
-            else:
-                assert False, status
-
+                        
         return poi
 
 
@@ -1132,6 +1126,16 @@ class HZZAnomalousCouplingsFromHistogramsWarsaw(HZZAnomalousCouplingsFromHistogr
 
 
     def getPOIList(self):
+
+        
+        for i in range (1,8): 
+            varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+
+
+            self.modelBuilder.doVar(varname)
+
+
+
         self.modelBuilder.doVar("ghg2[1.0,0,10]")
         self.modelBuilder.out.var("ghg2").removeRange()
         self.modelBuilder.out.var("ghg2").setAttribute("flatParam")
@@ -1163,55 +1167,42 @@ class HZZAnomalousCouplingsFromHistogramsWarsaw(HZZAnomalousCouplingsFromHistogr
 
 
         pois = super(HZZAnomalousCouplingsFromHistogramsWarsaw, self).getPOIList()
+        #relate input warsaw POis and Higgs basis couplings g's 
+        couplings = ["g1","g4","g2","g1prime2"] #this is the order that the couplings need to have
 
-        if not self.modelBuilder.out.var("g1"):
-            self.modelBuilder.doVar('expr::g1("sqrt(@0)", CMS_zz4l_fa1)')
-
+                    
+        
         #define EFT constants 
         self.modelBuilder.doVar('expr::cosW("0.87681811112",)')
         self.modelBuilder.doVar('expr::sinW("0.48082221247",)')
         self.modelBuilder.doVar('expr::mZ("91.2",)')
         self.modelBuilder.doVar('expr::Lambda1("100.0",)')
 
+        self.modelBuilder.doVar('expr::e_("0.313328534329",)')
 
 
-        #relate input POis and g's 
-        couplings = ["g1"]
-        i = 0
 
         
-        #self.modelBuilder.doVar("expr::g4")
 
-        self.modelBuilder.doVar('expr::g2("(@0>0 ? 1 : -1) * sqrt(abs(@0))",war1')
-        self.modelBuilder.doVar('expr::g4"("(@0>0 ? 1 : -1) * sqrt(abs(@0*@1))",war1,war3')
-        self.modelBuilder.doVar('expr::g1prime2("(@0>0 ? 1 : -1) * sqrt(abs(@0))",war2')
+        self.modelBuilder.doVar('deltacz[0.0,-1.0,1.0]')
+        self.modelBuilder.doVar('expr::czztilde("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
+        self.modelBuilder.doVar('expr::czz("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
+        self.modelBuilder.doVar('expr::czbox("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
+      
         
-        couplings.append(ai)
+
+        #relate g's to Higss basis couplings
+        self.modelBuilder.doVar('expr::g1("1 + @0",deltacz)')
+        self.modelBuilder.doVar('expr::g2("@3/(-1 * @1*@1 * @2*@2 / @0*@0)",e_,sinW,cosW,czz)')
+        self.modelBuilder.doVar('expr::g1prime2("@4*((@0*@0)*(@1*@1))/(2*(@2*@2)*(@3*@3))",e_,Lambda1,mZ,sinW,czbox)')
+        self.modelBuilder.doVar('expr::g4("@3/(-1 * @1*@1 * @2*@2 / @0*@0)",e_,sinW,cosW,czztilde)')
 
 
-        '''
-        for fai in self.sortedcouplings:
-            if fai == "fa1": continue
-        
-            ai = self.getcouplingname(fai)
-            i += 1
 
-            print "fai :", fai, ai
-        
-            
-            kwargs = {
-              "i": i,
-              "ai": ai,
-              
-            }
-            self.modelBuilder.doVar('expr::{ai}("(@0>0 ? 1 : -1) * sqrt(abs(@0))", CMS_zz4l_fai{i})'.format(**kwargs))
-            couplings.append(ai)
-        '''
+
+        #EFT relations between a_i couplings
+
         if self.scaledifferentsqrtsseparately: raise ValueError("HZZAnomalousCouplingsFromHistograms is not compatible with scaledifferentsqrtsseparately")
-
-
-
-
         self.modelBuilder.doVar('expr::EFT_g1WW("@0",g1)')
         self.modelBuilder.doVar('expr::EFT_g2WW("@0*@0*@1",cosW,g2)')
         self.modelBuilder.doVar('expr::EFT_g4WW("@0*@0*@1",cosW,g4)')
@@ -1266,6 +1257,7 @@ class HZZAnomalousCouplingsFromHistogramsWarsaw(HZZAnomalousCouplingsFromHistogr
         
         
         for g in couplings:
+            print "couplings", g
             if self.useHffanomalous:
                 self.modelBuilder.doVar('expr::ggHVV_{g}2("(@1*@1+@2*@2) * @3*@3 / @0", gammaH, ghg2, ghg4, {g})'.format(g=g))
                 self.modelBuilder.doVar('expr::ttHVV_{g}2("(@1*@1+@4*@2*@2) * @3*@3 / @0", gammaH, kappa, kappa_tilde, {g}, alpha)'.format(g=g))
@@ -1317,6 +1309,9 @@ class HZZAnomalousCouplingsFromHistogramsWarsaw(HZZAnomalousCouplingsFromHistogr
             for kwargs["g1"], kwargs["g2"], kwargs["g3"], kwargs["g4"] in itertools.combinations(couplings, 4):
                 self.modelBuilder.doVar('expr::VVHVV_{g1}1{g2}1{g3}1{g4}1_{signname}("{sign}@1*@2*@3*@4 / @0", gammaH, {g1}, {g2}, {g3}, {g4})'.format(**kwargs))
 
+
+        print "All good here"        
+        print "pois",pois
         return pois
 
 
