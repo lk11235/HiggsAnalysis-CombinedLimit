@@ -1,0 +1,1 @@
+combine -M MultiDimFit -P war1  --X-rtd TMCSO_AdaptivePseudoAsimov=0 --X-rtd MINIMIZER_analytic --cminDefaultMinimizerStrategy 0 --saveSpecifiedFunc=war2,war1  --X-rtd MINIMIZER_MaxCalls=999999999 -t -1  -V -v 3  --floatOtherPOIs=1 --saveInactivePOI=1  --setParameterRange=war1=0,2 --algo grid -d HVV_fa3.root -m 125  -n out_noxs --points 101
