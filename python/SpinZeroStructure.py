@@ -27,6 +27,7 @@ class SpinZeroHiggsBase(PhysicsModelBase_NiceSubclasses):
     def processPhysicsOptions(self,physOptions):
         processed = super(SpinZeroHiggsBase, self).processPhysicsOptions(physOptions)
 
+        
         for po in physOptions:
             if po.lower() == 'allowpmf':
                 self.allowPMF.default_factory = lambda: True
@@ -44,7 +45,7 @@ class SpinZeroHiggsBase(PhysicsModelBase_NiceSubclasses):
                     if i in self.allowPMF: raise ValueError("Two different options set for allow/forbidPMfai{}".format(i).replace("ai0", "a1"))
                     self.allowPMF[i] = toset
                 processed.append(po)
-
+        
         return processed
 
     def faidefinitionorder(self, i):
@@ -125,7 +126,7 @@ class SpinZeroHiggsFaiBase(SpinZeroHiggsBase):
             if po.lower() == "offshell":
                 self.offshell = True
                 processed.append(po)
-
+        
         return processed
 
     def parametername(self, parametertype, i, relative):
@@ -137,7 +138,7 @@ class SpinZeroHiggsFaiBase(SpinZeroHiggsBase):
     def getPOIList(self):
         poi = []
         poi += super(SpinZeroHiggsFaiBase, self).getPOIList()
-        '''
+        
         for i in xrange(self.numberoffais):
             varname = self.parametername("f", i, False)
             if self.faidefinitionorder(i) == self.numberoffais-1:
@@ -271,7 +272,7 @@ class SpinZeroHiggsFaiBase(SpinZeroHiggsBase):
                 self.modelBuilder.out.var("GGsm").setVal(1)
                 self.modelBuilder.out.var("GGsm").setConstant()
       
-        '''
+        
         return poi
 
 class SpinZeroHiggs(SpinZeroHiggsFaiBase):
@@ -860,7 +861,7 @@ class SpinZeroHiggsAiBase(SpinZeroHiggsBase):
                 self.modelBuilder.out.var(varname).setConstant()
             else:
                 assert False, status
-
+        print "pois :",poi        
         return poi
 
 class HZZAnomalousCouplingsFromHistogramsAi(HZZAnomalousCouplingsFromHistogramsBase, SpinZeroHiggsAiBase, CanTurnOffBkgModel, MultiSignalModel):
@@ -1079,7 +1080,7 @@ class SpinZeroHiggsAiBaseWarsaw(SpinZeroHiggsBase):
         poi = []
         poi += super(SpinZeroHiggsAiBaseWarsaw, self).getPOIList()
 
-        for i in range (1,8): 
+        for i in range (0,4): 
             varname = "war"+str(i)
             
             if len(self.aistatus) >= i -1: 
@@ -1128,8 +1129,24 @@ class HZZAnomalousCouplingsFromHistogramsWarsaw(HZZAnomalousCouplingsFromHistogr
     def getPOIList(self):
 
         
-        for i in range (1,8): 
-            varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+        for i in range (0,4): 
+            if i == 0:
+              varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+            if i == 1:
+              varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+            if i == 2:
+              varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+            if i == 3:
+              varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+            print "varname",varname
+            #if i == 4:
+            #  varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+            #if i == 5:
+            #  varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+            #if i == 6:
+            #  varname = "war"+str(i)+"[0.0,-10.0,10.0]"
+            #if i == 7:
+            #  varname = "war"+str(i)+"[0.0,-10.0,10.0]"
 
 
             self.modelBuilder.doVar(varname)
@@ -1179,24 +1196,35 @@ class HZZAnomalousCouplingsFromHistogramsWarsaw(HZZAnomalousCouplingsFromHistogr
         self.modelBuilder.doVar('expr::Lambda1("100.0",)')
 
         self.modelBuilder.doVar('expr::e_("0.313328534329",)')
-
+	self.modelBuilder.doVar('expr::vev_lam("0.0606242884",)')
 
 
         
 
-        self.modelBuilder.doVar('deltacz[0.0,-1.0,1.0]')
-        self.modelBuilder.doVar('expr::czztilde("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
-        self.modelBuilder.doVar('expr::czz("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
-        self.modelBuilder.doVar('expr::czbox("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
+        #self.modelBuilder.doVar('deltacz[0.0,-1.0,1.0]')
+        #self.modelBuilder.doVar('expr::czztilde("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
+        #self.modelBuilder.doVar('expr::czz("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
+        #self.modelBuilder.doVar('expr::czbox("@0 + @1 + @2 + @3",war1,war2,war3,war4)')
       
-        
+        self.modelBuilder.doVar('expr::deltacz("@0",war0)')
+        self.modelBuilder.doVar('expr::czz("@0",war1)')
+        self.modelBuilder.doVar('expr::czztilde("@0",war2)')
+        self.modelBuilder.doVar('expr::czbox("@0",war3)')
 
+
+        '''
+        self.modelBuilder.doVar('expr::g1("1+ @0",deltacz)')
+        self.modelBuilder.doVar('expr::g2("@0",czz)')
+        self.modelBuilder.doVar('expr::g1prime2("@0",czbox)')
+        self.modelBuilder.doVar('expr::g4("@0",czztilde)')
         #relate g's to Higss basis couplings
-        self.modelBuilder.doVar('expr::g1("1 + @0",deltacz)')
-        self.modelBuilder.doVar('expr::g2("@3/(-1 * @1*@1 * @2*@2 / @0*@0)",e_,sinW,cosW,czz)')
-        self.modelBuilder.doVar('expr::g1prime2("@4*((@0*@0)*(@1*@1))/(2*(@2*@2)*(@3*@3))",e_,Lambda1,mZ,sinW,czbox)')
-        self.modelBuilder.doVar('expr::g4("@3/(-1 * @1*@1 * @2*@2 / @0*@0)",e_,sinW,cosW,czztilde)')
+        '''
 
+        self.modelBuilder.doVar('expr::g1("1 + @0 ",deltacz)')
+        self.modelBuilder.doVar('expr::g2("@3/(-4 * @1*@1 * @2*@2 / (@0*@0))",e_,sinW,cosW,czz)')
+        self.modelBuilder.doVar('expr::g1prime2("@4*((@0*@0)*(@1*@1))/(2*(@2*@2)*(@3*@3))",e_,Lambda1,mZ,sinW,czbox)')
+        self.modelBuilder.doVar('expr::g4("@3/(-4 * @1*@1 * @2*@2 /(@0*@0))",e_,sinW,cosW,czztilde)')
+        
 
 
 
