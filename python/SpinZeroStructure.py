@@ -1153,11 +1153,13 @@ class HZZAnomalousCouplingsFromHistogramsWarsaw(HZZAnomalousCouplingsFromHistogr
                 
         print "Here"
         self.modelBuilder.doVar('expr::ggHVV_g12("@0*@0*@1*@1",war1,war2)')
-        self.modelBuilder.doVar('expr::ggHVV_g11g21_positive("@0*@1",war1,war2)')
-        
-        
 
-        self.modelBuilder.doVar('expr:ggHVV_g11g41_positive("@0*@0",war1)')
+        self.modelBuilder.doVar('expr::ggHVV_g11g21_negative("-1*@0*@1",war1,war2)')
+
+        self.modelBuilder.doVar('expr::ggHVV_g11g21_positive("@0*@1",war1,war2)')
+
+
+        #self.modelBuilder.doVar('expr:ggHVV_g11g41_positive("@0*@0",war1)')
 
 
         
